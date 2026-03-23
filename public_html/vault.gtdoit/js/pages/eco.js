@@ -101,17 +101,24 @@ function renderEcoHero(s){
 
   set('eco-h-income',  fmtMoney(inc));
   set('eco-h-expense', fmtMoney(exp));
-  set('eco-h-balance',
-    (bal>=0?'+':'')+fmtMoney(bal),
-    bal>=0 ? 'var(--green)' : 'var(--rose)'
-  );
+
+  const balEl = document.getElementById('eco-h-balance');
+  if(balEl){
+    balEl.textContent = (bal>=0?'+':'')+fmtMoney(bal);
+    balEl.style.opacity = '1';
+    balEl.classList.toggle('neg', bal<0);
+  }
 
   const bar  = document.getElementById('eco-balance-bar');
   const kvar = document.getElementById('eco-kvar');
   if(bar){
     const pct = inc>0 ? Math.min(exp/inc*100, 100) : 100;
-    bar.style.width      = pct+'%';
-    bar.style.background = pct>90?'var(--rose)': pct>70?'var(--amber)':'var(--green)';
+    bar.style.width = pct+'%';
+    bar.style.background = pct>90
+      ? 'linear-gradient(90deg,#ff7096,#ef4444)'
+      : pct>70
+        ? 'linear-gradient(90deg,#fbbf24,#f59e0b)'
+        : 'linear-gradient(90deg,#4ade80,#22c55e)';
   }
   if(kvar){
     if(inc>0){
@@ -119,7 +126,7 @@ function renderEcoHero(s){
       kvar.textContent = left>=0
         ? `Kvar att spendera: ${fmtMoney(left)}`
         : `Överkurs: ${fmtMoney(Math.abs(left))}`;
-      kvar.style.color = left>=0 ? 'var(--green)' : 'var(--rose)';
+      kvar.style.color = left>=0 ? 'rgba(74,222,128,.9)' : 'rgba(255,112,150,.9)';
     } else kvar.textContent = '';
   }
 }
