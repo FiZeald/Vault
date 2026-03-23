@@ -1,0 +1,13 @@
+# Credentials — never commit
+public_html/vault.gtdoit/includes/config.php
+
+# User uploads
+public_html/vault.gtdoit/uploads/*
+!public_html/vault.gtdoit/uploads/.htaccess
+
+# Claude settings
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db

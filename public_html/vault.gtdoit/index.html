@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="sv" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0A0D14" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F0F2F8" media="(prefers-color-scheme: light)">
+<title>Vault – Familjens hemöversikt</title>
+<meta name="description" content="Vault samlar allt som rör hemmet – inventarie, garantier, kvitton, uppgifter, service och ekonomi.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── DESIGN TOKENS ─────────────────────────────────────────────── */
+:root{
+  --bg:#080B12;--surface:#0F1420;--surface2:#141B2D;--surface3:#1A2238;
+  --border:#1C2640;--border2:#263052;
+  --ink:#E4EAFB;--ink2:#8993B5;--ink3:#404E70;
+  --accent:#4D7CFF;--accent2:#7BA0FF;--accent-bg:rgba(77,124,255,.13);
+  --green:#0FD07A;--green-bg:rgba(15,208,122,.12);
+  --amber:#F5A623;--amber-bg:rgba(245,166,35,.12);
+  --rose:#F04F6C;--rose-bg:rgba(240,79,108,.12);
+  --purple:#9B6FFF;--purple-bg:rgba(155,111,255,.12);
+  --cyan:#06CDCD;--cyan-bg:rgba(6,205,205,.12);
+  --r:12px;--r2:8px;--r3:18px;--r4:24px;
+  --shadow:0 8px 32px rgba(0,0,0,.5);--shadow2:0 2px 8px rgba(0,0,0,.35);
+  --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --sb-w:230px;--topbar-h:56px;--mob-nav-h:62px;
+  --transition:.15s ease;
+}
+[data-theme="light"]{
+  --bg:#EEF1F8;--surface:#FFFFFF;--surface2:#F4F6FD;--surface3:#E8EDF8;
+  --border:#D5DCF0;--border2:#B8C3E0;
+  --ink:#141928;--ink2:#404E70;--ink3:#8993B5;
+  --shadow:0 8px 32px rgba(0,0,0,.09);--shadow2:0 2px 8px rgba(0,0,0,.06);
+}
+
+/* ── RESET ─────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* ── LAYOUT ─────────────────────────────────────────────────────── */
+#auth{display:flex;align-items:center;justify-content:center;min-height:100dvh;padding:20px;background:var(--bg)}
+#app{display:none;height:100dvh;overflow:hidden}
+#app.on{display:flex}
+
+.sidebar{width:var(--sb-w);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:transform .25s ease}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{padding:0 18px;height:var(--topbar-h);flex-shrink:0;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);background:var(--surface)}
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:24px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+@supports(padding-bottom:env(safe-area-inset-bottom)){.content{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}}
+
+/* ── SIDEBAR ─────────────────────────────────────────────────────── */
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.sb-logo-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;box-shadow:0 2px 8px rgba(77,124,255,.3)}
+.sb-logo-text{font-size:16px;font-weight:700;letter-spacing:-.4px}
+.sb-logo-sub{font-size:10px;color:var(--ink3);letter-spacing:.5px;text-transform:uppercase;margin-top:1px}
+.sb-family{padding:9px 16px;font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.8px;font-weight:600;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:color var(--transition)}
+.sb-family:hover{color:var(--accent2)}
+.sb-family strong{color:var(--ink2);font-size:12px;text-transform:none;letter-spacing:0;font-weight:600}
+.sb-nav{flex:1;overflow-y:auto;padding:6px 0;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.sb-section{padding:12px 16px 3px;font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 12px 8px 16px;cursor:pointer;border:none;background:none;width:100%;text-align:left;color:var(--ink2);font-family:var(--font);font-size:13px;font-weight:500;transition:all var(--transition);position:relative}
+.ni .ni-icon{width:22px;text-align:center;font-size:14px;flex-shrink:0;opacity:.85}
+.ni:hover{background:var(--surface2);color:var(--ink)}
+.ni.on{background:var(--accent-bg);color:var(--accent2)}
+.ni.on::before{content:'';position:absolute;left:0;top:5px;bottom:5px;width:3px;background:var(--accent);border-radius:0 3px 3px 0}
+.ni.on .ni-icon{opacity:1}
+.ni-badge{margin-left:auto;background:var(--rose);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 5px;font-family:var(--mono);flex-shrink:0}
+.sb-bottom{padding:12px;border-top:1px solid var(--border)}
+.sb-user{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--r2);cursor:pointer;transition:background var(--transition)}
+.sb-user:hover{background:var(--surface2)}
+.sb-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-user-info{flex:1;min-width:0}
+.sb-user-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-user-email{font-size:10px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── TOPBAR ──────────────────────────────────────────────────────── */
+.tb-back{background:none;border:none;color:var(--ink3);cursor:pointer;padding:6px;border-radius:var(--r2);transition:all var(--transition);font-size:16px;display:none}
+.tb-back:hover{background:var(--surface2);color:var(--ink)}
+.tb-title{font-size:15px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.search-wrap{position:relative;display:flex;align-items:center}
+.search-wrap input{background:var(--surface2);border:1px solid var(--border);color:var(--ink);padding:7px 32px 7px 32px;border-radius:20px;font-family:var(--font);font-size:13px;width:210px;transition:all .2s}
+.search-wrap input:focus{outline:none;border-color:var(--accent);width:250px;background:var(--surface)}
+.search-icon{position:absolute;left:10px;color:var(--ink3);font-size:13px;pointer-events:none}
+.search-clear{position:absolute;right:10px;background:none;border:none;color:var(--ink3);cursor:pointer;font-size:13px;display:none;padding:2px}
+.search-clear.on{display:block}
+#search-panel{position:absolute;top:50px;right:0;width:360px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);z-index:200;max-height:480px;overflow-y:auto;display:none}
+.tb-menu-btn{display:none;background:none;border:none;color:var(--ink2);cursor:pointer;padding:6px;border-radius:var(--r2);font-size:20px;line-height:1;transition:all var(--transition);flex-shrink:0}
+.tb-menu-btn:hover{background:var(--surface2);color:var(--ink)}
+
+/* ── MOBILE ──────────────────────────────────────────────────────── */
+.mob-nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:299;backdrop-filter:blur(3px)}
+.mob-nav-overlay.on{display:block}
+.mob-tabbar{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--mob-nav-h);background:var(--surface);border-top:1px solid var(--border);z-index:100;padding-bottom:env(safe-area-inset-bottom,0px)}
+.mob-tabbar-inner{display:flex;height:62px}
+.mob-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;border:none;background:none;color:var(--ink3);font-family:var(--font);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;border-radius:var(--r2);transition:all var(--transition);position:relative;padding:6px 4px 4px}
+.mob-tab .mt-icon{font-size:19px;line-height:1}
+.mob-tab.on{color:var(--accent2)}
+.mob-tab .mt-dot{position:absolute;top:5px;right:calc(50% - 14px);width:7px;height:7px;border-radius:50%;background:var(--rose);display:none;border:2px solid var(--surface)}
+.mob-tab .mt-dot.on{display:block}
+
+/* ── PAGES ──────────────────────────────────────────────────────── */
+.page{display:none}
+.page.on{display:block}
+
+/* ── BUTTONS ─────────────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r2);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .2s;white-space:nowrap;line-height:1.4}
+.btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(77,124,255,.35)}
+.btn-s{background:var(--surface2);color:var(--ink2);border:1px solid var(--border)}.btn-s:hover{background:var(--surface3);color:var(--ink)}
+.btn-d{background:var(--rose-bg);color:var(--rose)}.btn-d:hover{background:var(--rose);color:#fff}
+.btn-g{background:transparent;color:var(--ink3)}.btn-g:hover{background:var(--surface2);color:var(--ink2)}
+.btn-t{background:var(--green-bg);color:var(--green)}.btn-t:hover{background:var(--green);color:#fff}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px}
+.btn-icon{padding:6px;min-width:30px;justify-content:center}
+.btn.loading{opacity:.65;pointer-events:none}
+.btn.loading::after{content:'';width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-left:4px}
+
+/* ── BADGES ─────────────────────────────────────────────────────── */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-blue{background:var(--accent-bg);color:var(--accent2)}
+.b-green{background:var(--green-bg);color:var(--green)}
+.b-amber{background:var(--amber-bg);color:var(--amber)}
+.b-rose{background:var(--rose-bg);color:var(--rose)}
+.b-purple{background:var(--purple-bg);color:var(--purple)}
+.b-cyan{background:var(--cyan-bg);color:var(--cyan)}
+
+/* ── CARDS / LAYOUT ──────────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px}
+.sec-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.sec-hd h2{font-size:20px;font-weight:700;letter-spacing:-.4px}
+.sec-hd p{font-size:13px;color:var(--ink3);margin-top:2px}
+.empty{text-align:center;padding:52px 24px;color:var(--ink3)}
+.empty-icon{font-size:44px;margin-bottom:14px;opacity:.5}
+.empty h3{font-size:16px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+.empty p{font-size:13px;margin-bottom:18px}
+
+/* ── STATS GRID ──────────────────────────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;cursor:pointer;transition:all .2s;overflow:hidden;position:relative}
+.stat:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--shadow2)}
+.stat-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.stat-icon{font-size:20px}
+.stat-val{font-family:var(--mono);font-size:28px;font-weight:700;letter-spacing:-1px;margin-bottom:2px}
+.stat-label{font-size:12px;font-weight:600;color:var(--ink2)}
+.stat-sub{font-size:11px;color:var(--ink3);margin-top:2px}
+
+/* ── DASHBOARD ───────────────────────────────────────────────────── */
+.dash-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.dash-card-hd{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.dash-card-hd h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink2)}
+.dash-card-body{padding:4px 0}
+.alert-row{display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;transition:background var(--transition);border-bottom:1px solid var(--border)}
+.alert-row:last-child{border-bottom:none}
+.alert-row:hover{background:var(--surface2)}
+.alert-row.overdue{border-left:3px solid var(--rose)}
+.alert-row.soon{border-left:3px solid var(--amber)}
+.alert-txt{flex:1;min-width:0}
+.alert-txt strong{font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alert-txt span{font-size:11px;color:var(--ink3)}
+.task-row{display:flex;align-items:flex-start;gap:10px;padding:11px 16px;cursor:pointer;transition:background var(--transition);border-bottom:1px solid var(--border)}
+.task-row:last-child{border-bottom:none}
+.task-row:hover{background:var(--surface2)}
+.task-row.done{opacity:.5}
+.chk{width:18px;height:18px;border:2px solid var(--border2);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--transition);margin-top:1px;font-size:11px}
+.chk.on{background:var(--green);border-color:var(--green);color:#fff}
+.task-txt{flex:1;min-width:0}
+.task-txt strong{font-size:13px;font-weight:600}
+.task-txt span{font-size:11px;color:var(--ink3);display:block;margin-top:1px}
+.pri{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px}
+.pri-u{background:rgba(240,79,108,.2);color:var(--rose)}
+.pri-h{background:var(--amber-bg);color:var(--amber)}
+.pri-m{background:var(--accent-bg);color:var(--accent2)}
+.pri-l{background:var(--green-bg);color:var(--green)}
+.dash-done-toggle{padding:8px 16px;font-size:12px;color:var(--ink3);cursor:pointer;border-top:1px solid var(--border);transition:background var(--transition)}
+.dash-done-toggle:hover{background:var(--surface2);color:var(--ink2)}
+
+/* ── NEXT UP BANNER ──────────────────────────────────────────────── */
+.next-up{background:linear-gradient(135deg,rgba(77,124,255,.1) 0%,rgba(155,111,255,.08) 100%);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:24px;position:relative;overflow:hidden}
+.next-up::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--purple))}
+.next-up h3{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent2);margin-bottom:12px}
+.next-task{display:flex;align-items:flex-start;gap:14px}
+.next-content{flex:1}
+.next-content h2{font-size:16px;font-weight:700;letter-spacing:-.2px;margin-bottom:4px}
+.next-content p{font-size:12px;color:var(--ink2)}
+.next-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+
+/* ── ITEMS ───────────────────────────────────────────────────────── */
+.filter-row{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.filter-chips{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.chip{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;background:var(--surface2);border:1px solid var(--border);color:var(--ink2);transition:all var(--transition);white-space:nowrap}
+.chip.on,.chip:hover{background:var(--accent-bg);border-color:var(--accent);color:var(--accent2)}
+.sort-sel{background:var(--surface2);border:1px solid var(--border);color:var(--ink2);padding:5px 10px;border-radius:var(--r2);font-family:var(--font);font-size:12px;cursor:pointer}
+.sort-sel:focus{outline:none;border-color:var(--accent)}
+.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:14px}
+.icard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .2s}
+.icard:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--shadow)}
+.icard-img{height:140px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:46px;position:relative;overflow:hidden}
+.icard-img img{width:100%;height:100%;object-fit:cover}
+.icard-badges{position:absolute;top:8px;left:8px;display:flex;flex-direction:column;gap:4px}
+.icard-body{padding:12px}
+.icard-body h4{font-size:13px;font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.icard-meta{font-size:11px;color:var(--ink3);display:flex;align-items:center;gap:4px}
+.icard-foot{padding:10px 12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:11px;color:var(--ink3)}
+.icard-foot span:last-child{font-weight:600;color:var(--ink2)}
+
+/* ── DETAIL PAGE ──────────────────────────────────────────────────── */
+.detail-layout{display:grid;grid-template-columns:280px 1fr;gap:24px}
+.detail-img{background:var(--surface2);border-radius:var(--r);height:260px;display:flex;align-items:center;justify-content:center;font-size:72px;overflow:hidden;border:1px solid var(--border)}
+.detail-img img{width:100%;height:100%;object-fit:cover}
+.detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.detail-name{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:8px}
+.detail-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.detail-sec{margin-bottom:20px}
+.detail-sec h4{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--ink3);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.detail-row:last-child{border-bottom:none}
+.detail-row span:first-child{color:var(--ink3)}
+.detail-row span:last-child{font-weight:500}
+
+/* ── TASKS ───────────────────────────────────────────────────────── */
+.tasks-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.full-task-row{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)}
+.full-task-row:last-child{border-bottom:none}
+.full-task-row.done .task-txt{opacity:.5;text-decoration:line-through}
+.task-meta{font-size:11px;color:var(--ink3);display:flex;gap:10px;flex-wrap:wrap;margin-top:3px}
+.task-acts{display:flex;gap:4px;margin-left:auto;flex-shrink:0}
+
+/* ── SERVICE ─────────────────────────────────────────────────────── */
+.svc-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);transition:background var(--transition)}
+.svc-row:last-child{border-bottom:none}
+.svc-row.overdue .svc-title{color:var(--rose)}
+.svc-icon{width:38px;height:38px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.svc-info{flex:1;min-width:0}
+.svc-title{font-size:13px;font-weight:600}
+.svc-sub{font-size:11px;color:var(--ink3);margin-top:2px}
+.svc-acts{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.svc-hist-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.svc-hist-row:last-child{border-bottom:none}
+.svc-hist-icon{width:34px;height:34px;border-radius:8px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.svc-hist-info{flex:1;min-width:0}
+.svc-hist-title{font-size:13px;font-weight:600}
+.svc-hist-meta{font-size:11px;color:var(--ink3);margin-top:2px}
+
+/* ── WARRANTIES ──────────────────────────────────────────────────── */
+.warr-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:all var(--transition);border-radius:var(--r2)}
+.warr-row:last-child{border-bottom:none}
+.warr-row:hover{background:var(--surface2);padding-left:8px;padding-right:8px}
+
+/* ── RECEIPTS ────────────────────────────────────────────────────── */
+.rec-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:all var(--transition)}
+.rec-row:last-child{border-bottom:none}
+.rec-row:hover{background:var(--surface2);margin:0 -8px;padding:12px 8px;border-radius:var(--r2)}
+.rec-thumb{width:44px;height:44px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;flex-shrink:0;border:1px solid var(--border)}
+.rec-thumb img{width:100%;height:100%;object-fit:cover}
+.rec-info{flex:1;min-width:0}
+.rec-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec-meta{font-size:11px;color:var(--ink3)}
+.rec-amount{font-size:15px;font-weight:700;font-family:var(--mono);flex-shrink:0}
+
+/* ── ECONOMY ─────────────────────────────────────────────────────── */
+.eco-header{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:24px}
+.eco-stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;position:relative;overflow:hidden}
+.eco-stat::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.eco-stat.income::after{background:var(--green)}
+.eco-stat.expense::after{background:var(--rose)}
+.eco-stat.balance::after{background:var(--accent)}
+.eco-stat .label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--ink3);font-weight:700;margin-bottom:8px}
+.eco-stat .val{font-family:var(--mono);font-size:26px;font-weight:700;letter-spacing:-1px}
+.eco-stat.income .val{color:var(--green)}
+.eco-stat.expense .val{color:var(--rose)}
+.cat-bar{margin-bottom:12px}
+.cat-bar-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:12px}
+.cat-bar-track{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.cat-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.trans-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+.trans-row:last-child{border-bottom:none}
+.trans-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.trans-info{flex:1;min-width:0}
+.trans-desc{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trans-sub{font-size:11px;color:var(--ink3)}
+.trans-amount{font-family:var(--mono);font-size:14px;font-weight:700;flex-shrink:0}
+.trans-amount.income{color:var(--green)}
+.trans-amount.expense{color:var(--rose)}
+
+/* ── FAMILY ──────────────────────────────────────────────────────── */
+.member-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.member-row:last-child{border-bottom:none}
+.member-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.member-info{flex:1;min-width:0}
+.member-info strong{font-size:13px;display:block}
+.member-info span{font-size:11px;color:var(--ink3)}
+.invite-box{background:linear-gradient(135deg,var(--accent-bg),var(--purple-bg));border:1px solid var(--border2);border-radius:var(--r);padding:24px;text-align:center}
+.invite-code{font-family:var(--mono);font-size:34px;font-weight:700;letter-spacing:8px;color:var(--accent2);margin:10px 0;word-break:break-all}
+
+/* ── CATEGORIES ──────────────────────────────────────────────────── */
+.cats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:12px}
+.cat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.cat-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--shadow2)}
+.cat-icon{font-size:32px;margin-bottom:8px}
+.cat-card h3{font-size:13px;font-weight:600}
+.cat-card p{font-size:11px;color:var(--ink3);margin-top:3px}
+.cat-del{position:absolute;top:6px;right:6px;opacity:0;background:var(--rose-bg);border:none;color:var(--rose);border-radius:5px;width:22px;height:22px;cursor:pointer;font-size:13px;transition:opacity var(--transition)}
+.cat-card:hover .cat-del{opacity:1}
+
+/* ── SETTINGS PAGE ───────────────────────────────────────────────── */
+.set-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:16px;overflow:hidden}
+.set-section-hd{padding:14px 18px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3)}
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);gap:16px}
+.set-row:last-child{border-bottom:none}
+.set-row-left{flex:1;min-width:0}
+.set-row-label{font-size:13px;font-weight:500}
+.set-row-sub{font-size:12px;color:var(--ink3);margin-top:2px}
+.set-toggle{position:relative;width:42px;height:24px;flex-shrink:0}
+.set-toggle input{opacity:0;width:0;height:0}
+.set-toggle-track{position:absolute;inset:0;background:var(--border2);border-radius:12px;cursor:pointer;transition:background .2s}
+.set-toggle input:checked+.set-toggle-track{background:var(--accent)}
+.set-toggle-track::after{content:'';position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.set-toggle input:checked+.set-toggle-track::after{transform:translateX(18px)}
+.set-info-row{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--border)}
+.set-info-row:last-child{border-bottom:none}
+.set-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0}
+.set-info{flex:1}
+.set-info strong{font-size:14px;font-weight:600;display:block}
+.set-info span{font-size:12px;color:var(--ink3)}
+
+/* ── CHECKLISTS ──────────────────────────────────────────────────── */
+.cl-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.cl-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;transition:all .2s;position:relative;overflow:hidden}
+.cl-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--cl-color,var(--accent));opacity:.8}
+.cl-card:hover{border-color:var(--border2);box-shadow:var(--shadow2)}
+.cl-card.cl-done{opacity:.75}
+.cl-card-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cl-icon{font-size:20px;flex-shrink:0}
+.cl-card-title{flex:1;font-size:14px;font-weight:600;cursor:pointer;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cl-card-title:hover{color:var(--accent2)}
+.cl-card-acts{display:flex;gap:4px;flex-shrink:0}
+.cl-progress-wrap{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.cl-progress-bar{height:100%;background:var(--cl-color,var(--accent));border-radius:3px;transition:width .4s ease}
+.cl-meta{font-size:11px;color:var(--ink3);margin-bottom:10px}
+.cl-items-preview{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.cl-item-row{display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;transition:opacity var(--transition)}
+.cl-item-row.done{opacity:.5}
+.cl-item-row span{font-size:12px}
+.cl-item-row.done span{text-decoration:line-through}
+.cl-detail-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.cl-detail-item:last-child{border-bottom:none}
+.cl-detail-item.done .cl-item-label{text-decoration:line-through;opacity:.5}
+.cl-item-label{flex:1;font-size:13px;cursor:pointer}
+.cl-detail-progress-wrap{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin:8px 0 12px}
+#cl-detail-progress{height:100%;background:var(--accent);border-radius:3px;transition:width .4s}
+
+/* ── EMOJI PICKER ────────────────────────────────────────────────── */
+.emoji-row{display:flex;align-items:center;gap:8px}
+.emoji-sel{font-size:22px;padding:8px 12px;border-radius:var(--r2);background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:border-color var(--transition);line-height:1}
+.emoji-sel:hover{border-color:var(--accent)}
+.emoji-picker-wrap{position:relative;flex:1}
+#emoji-picker,#emoji-picker2{display:none;position:absolute;top:100%;left:0;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:8px;max-height:180px;overflow-y:auto;width:260px;margin-top:4px}
+.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px}
+.ebtn{background:none;border:none;font-size:18px;cursor:pointer;padding:4px;border-radius:5px;transition:background var(--transition)}
+.ebtn:hover,.ebtn.on{background:var(--accent-bg)}
+
+/* ── SEARCH RESULTS ──────────────────────────────────────────────── */
+.sr-sec{padding:6px 0}
+.sr-hd{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);padding:6px 14px 4px}
+.sr-row{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;transition:background var(--transition)}
+.sr-row:hover{background:var(--surface2)}
+
+/* ── MODALS ──────────────────────────────────────────────────────── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.on{opacity:1;pointer-events:auto}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:28px;width:100%;max-width:520px;max-height:90dvh;overflow-y:auto;box-shadow:var(--shadow);animation:modal-in .2s ease}
+@keyframes modal-in{from{transform:scale(.96) translateY(10px);opacity:0}to{transform:none;opacity:1}}
+.modal h2{font-size:17px;font-weight:700;margin-bottom:20px;letter-spacing:-.3px}
+.modal-wide{max-width:660px}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:11px;font-weight:600;color:var(--ink3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.fi{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;color:var(--ink);font-family:var(--font);font-size:13px;transition:border-color var(--transition)}
+.fi:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.fi::placeholder{color:var(--ink3)}
+textarea.fi{min-height:76px;resize:vertical}
+select.fi{cursor:pointer}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.macts{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* ── PHOTO UPLOAD ────────────────────────────────────────────────── */
+.phdrop{background:var(--surface2);border:2px dashed var(--border2);border-radius:var(--r);padding:18px;text-align:center;cursor:pointer;transition:all .2s;font-size:13px;color:var(--ink3)}
+.phdrop:hover{border-color:var(--accent);color:var(--ink2)}
+.phdrop input[type=file]{display:none}
+.phprev{max-width:100%;max-height:180px;border-radius:var(--r2);margin-top:8px}
+.uploading{display:none;text-align:center;padding:10px;font-size:12px;color:var(--ink3)}
+.uploading.on{display:flex;align-items:center;justify-content:center;gap:8px}
+.spin{width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── AUTH ────────────────────────────────────────────────────────── */
+.auth-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r4);padding:36px;width:100%;max-width:420px;box-shadow:var(--shadow);animation:modal-in .3s ease}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-logo-mark{width:56px;height:56px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:18px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px;box-shadow:0 4px 20px rgba(77,124,255,.4)}
+.auth-logo h1{font-size:26px;font-weight:700;letter-spacing:-1px}
+.auth-logo p{font-size:13px;color:var(--ink3);margin-top:4px}
+.auth-tabs{display:flex;gap:4px;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:24px}
+.auth-tab{flex:1;padding:8px;border-radius:8px;text-align:center;cursor:pointer;font-size:13px;font-weight:500;color:var(--ink3);transition:all var(--transition);border:none;background:none;font-family:var(--font)}
+.auth-tab.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.auth-form{display:none;flex-direction:column;gap:12px}
+.auth-form.on{display:flex}
+.auth-msg{font-size:13px;padding:10px 14px;border-radius:var(--r2);display:none;margin-bottom:4px}
+.auth-msg.on.err{display:block;background:var(--rose-bg);color:var(--rose);border:1px solid rgba(240,79,108,.3)}
+.auth-msg.on.ok{display:block;background:var(--green-bg);color:var(--green);border:1px solid rgba(15,208,122,.3)}
+.auth-link{font-size:12px;color:var(--accent2);cursor:pointer;text-align:center;margin-top:4px}
+.auth-link:hover{text-decoration:underline}
+
+/* ── TABS ────────────────────────────────────────────────────────── */
+.page-tabs{display:flex;gap:4px;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:20px;width:fit-content}
+.page-tab{padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--ink3);border:none;background:none;font-family:var(--font);transition:all var(--transition)}
+.page-tab.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+
+/* ── MONTH PICKER ────────────────────────────────────────────────── */
+.month-nav{display:flex;align-items:center;gap:8px}
+.month-nav button{background:none;border:none;color:var(--ink2);cursor:pointer;font-size:18px;padding:4px 8px;border-radius:var(--r2);transition:all var(--transition)}
+.month-nav button:hover{background:var(--surface2)}
+.month-nav span{font-size:14px;font-weight:600;min-width:120px;text-align:center}
+
+/* ── SKELETON LOADER ─────────────────────────────────────────────── */
+.skeleton{background:linear-gradient(90deg,var(--surface2) 25%,var(--surface3) 50%,var(--surface2) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--r2)}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── TOAST ───────────────────────────────────────────────────────── */
+.toast{position:fixed;bottom:calc(20px + var(--mob-nav-h,0px));left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:10px 20px;font-size:13px;font-weight:500;box-shadow:var(--shadow);transition:transform .3s;z-index:9999;white-space:nowrap;max-width:calc(100vw - 40px);overflow:hidden;text-overflow:ellipsis}
+.toast.on{transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--rose-bg);border-color:rgba(240,79,108,.3);color:var(--rose)}
+.toast.ok{background:var(--green-bg);border-color:rgba(15,208,122,.3);color:var(--green)}
+
+/* ── COMPACT MODE ────────────────────────────────────────────────── */
+body.compact .content{padding:16px}
+body.compact .card{padding:14px}
+body.compact .stats-grid{gap:10px}
+body.compact .stat{padding:12px 14px}
+body.compact .stat-val{font-size:22px}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────── */
+@media(max-width:900px){
+  :root{--sb-w:260px}
+  .sidebar{position:fixed;top:0;bottom:0;left:0;z-index:300;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .tb-menu-btn{display:flex}
+  .mob-tabbar{display:block}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .dash-grid{grid-template-columns:1fr}
+  .detail-layout{grid-template-columns:1fr}
+  .tasks-layout{grid-template-columns:1fr}
+  .eco-header{grid-template-columns:1fr 1fr}
+  .items-grid{grid-template-columns:repeat(auto-fill,minmax(155px,1fr))}
+  .fr{grid-template-columns:1fr}
+  .search-wrap input{width:150px}
+  .search-wrap input:focus{width:190px}
+  .content{padding-bottom:calc(var(--mob-nav-h) + 12px + env(safe-area-inset-bottom,0px))}
+  .toast{bottom:calc(var(--mob-nav-h) + 16px + env(safe-area-inset-bottom,0px))}
+}
+@media(max-width:600px){
+  .content{padding:16px;padding-bottom:calc(var(--mob-nav-h) + 16px + env(safe-area-inset-bottom,0px))}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .eco-header{grid-template-columns:1fr}
+  #search-panel{width:calc(100vw - 32px);right:16px}
+  .modal{padding:20px;border-radius:var(--r)}
+  .auth-box{padding:24px;border-radius:var(--r3)}
+}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<!-- ── AUTH ───────────────────────────────────────────────────── -->
+<div id="auth" role="main">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="auth-logo-mark" role="img" aria-label="Vault logotyp">🔐</div>
+      <h1>Vault</h1>
+      <p>Familjens hemöversikt</p>
+    </div>
+    <div class="auth-tabs" role="tablist">
+      <button class="auth-tab on" id="t-login" role="tab" aria-selected="true" onclick="switchTab('login')">Logga in</button>
+      <button class="auth-tab" id="t-reg" role="tab" aria-selected="false" onclick="switchTab('reg')">Nytt konto</button>
+      <button class="auth-tab" id="t-join" role="tab" aria-selected="false" onclick="switchTab('join')">Gå med</button>
+    </div>
+    <div id="auth-msg" class="auth-msg" role="alert" aria-live="polite"></div>
+    <div class="auth-form on" id="f-login" role="tabpanel">
+      <input class="fi" id="l-email" type="email" placeholder="E-postadress" autocomplete="email" inputmode="email">
+      <input class="fi" id="l-pw" type="password" placeholder="Lösenord" autocomplete="current-password">
+      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="doLogin()">Logga in →</button>
+      <div class="auth-link" onclick="switchTab('forgot')" tabindex="0" role="button">Glömt lösenordet?</div>
+    </div>
+    <div class="auth-form" id="f-reg" role="tabpanel">
+      <input class="fi" id="r-name" type="text" placeholder="Ditt namn" autocomplete="name">
+      <input class="fi" id="r-email" type="email" placeholder="E-postadress" autocomplete="email">
+      <input class="fi" id="r-pw" type="password" placeholder="Lösenord (minst 6 tecken)" autocomplete="new-password">
+      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="doRegister()">Skapa konto →</button>
+    </div>
+    <div class="auth-form" id="f-join" role="tabpanel">
+      <input class="fi" id="j-name" type="text" placeholder="Ditt namn" autocomplete="name">
+      <input class="fi" id="j-email" type="email" placeholder="E-postadress" autocomplete="email">
+      <input class="fi" id="j-pw" type="password" placeholder="Lösenord (minst 6 tecken)" autocomplete="new-password">
+      <input class="fi" id="j-code" type="text" placeholder="Inbjudningskod (t.ex. A3F9K2)" maxlength="6" style="text-transform:uppercase;font-family:var(--mono);letter-spacing:4px" autocomplete="off">
+      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="doJoin()">Gå med i familjen →</button>
+    </div>
+    <div class="auth-form" id="f-forgot" role="tabpanel">
+      <p style="font-size:13px;color:var(--ink3)">Ange din e-post så skickar vi en återställningslänk.</p>
+      <input class="fi" id="fg-email" type="email" placeholder="E-postadress" autocomplete="email">
+      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="doForgot()">Skicka länk →</button>
+      <div class="auth-link" onclick="switchTab('login')" tabindex="0" role="button">← Tillbaka till inloggning</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── APP ────────────────────────────────────────────────────── -->
+<div id="app" role="application">
+
+  <div class="mob-nav-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-mark">🔐</div>
+      <div>
+        <div class="sb-logo-text">Vault</div>
+        <div class="sb-logo-sub">Hemöversikt</div>
+      </div>
+    </div>
+    <div class="sb-family" onclick="go('family')" title="Hantera familj" role="button" tabindex="0">
+      <span>🏠 <strong id="sb-family-name">Min familj</strong></span>
+      <span style="font-size:11px">⇄</span>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section">Översikt</div>
+      <button class="ni on" onclick="go('dash')"><span class="ni-icon">📊</span>Dashboard</button>
+      <div class="sb-section">Hemmet</div>
+      <button class="ni" onclick="go('inv')"><span class="ni-icon">📦</span>Inventarie</button>
+      <button class="ni" onclick="go('cats')"><span class="ni-icon">🏷️</span>Kategorier</button>
+      <button class="ni" onclick="go('warr')"><span class="ni-icon">🛡️</span>Garantier</button>
+      <button class="ni" onclick="go('receipts')"><span class="ni-icon">🧾</span>Kvitton</button>
+      <div class="sb-section">Planering</div>
+      <button class="ni" onclick="go('tasks')"><span class="ni-icon">✅</span>Uppgifter<span id="b-tasks" class="ni-badge" style="display:none"></span></button>
+      <button class="ni" onclick="go('svc')"><span class="ni-icon">🔧</span>Service<span id="b-svc" class="ni-badge" style="display:none"></span></button>
+      <button class="ni" onclick="go('checklists')"><span class="ni-icon">📋</span>Listor</button>
+      <div class="sb-section">Ekonomi</div>
+      <button class="ni" onclick="go('eco')"><span class="ni-icon">💰</span>Ekonomi</button>
+      <div class="sb-section">Övrigt</div>
+      <button class="ni" onclick="go('family')"><span class="ni-icon">👥</span>Familj</button>
+      <button class="ni" onclick="go('settings')"><span class="ni-icon">⚙️</span>Inställningar</button>
+      <button class="ni" id="ni-admin" style="display:none" onclick="go('admin')"><span class="ni-icon">🔑</span>Admin</button>
+    </nav>
+    <div class="sb-bottom">
+      <div class="sb-user" onclick="openUserMenu()" role="button" tabindex="0">
+        <div class="sb-av" id="sb-av" style="background:#4D7CFF">V</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name" id="sb-name">Laddar…</div>
+          <div class="sb-user-email" id="sb-email"></div>
+        </div>
+        <span style="color:var(--ink3);font-size:12px">⋯</span>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn btn-s btn-sm btn-icon" onclick="toggleTheme()" title="Byt tema"><span id="theme-icon">☀️</span></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <header class="topbar">
+      <button class="tb-menu-btn" id="mob-menu-btn" onclick="toggleSidebar()" aria-label="Öppna meny" aria-expanded="false" aria-controls="sidebar">☰</button>
+      <button class="tb-back btn btn-g btn-icon" id="back-btn" onclick="goBack()" aria-label="Tillbaka" style="display:none">←</button>
+      <h1 class="tb-title" id="ptitle">Dashboard</h1>
+      <div class="search-wrap" role="search">
+        <span class="search-icon">🔍</span>
+        <input type="search" id="search" placeholder="Sök…" autocomplete="off" oninput="handleSearch(this.value)" aria-label="Sök i Vault">
+        <button class="search-clear" id="search-clear" onclick="clearSearch()" aria-label="Rensa">✕</button>
+        <div id="search-panel" role="listbox"></div>
+      </div>
+      <button class="btn btn-p btn-sm" id="addbtn" onclick="handleAdd()" style="display:none">+ Lägg till</button>
+    </header>
+
+    <div class="content" id="content-area">
+
+      <!-- DASHBOARD -->
+      <div class="page on" id="p-dash">
+        <div class="dash-header">
+          <div>
+            <h1 style="font-size:22px;font-weight:700;letter-spacing:-.4px" id="dash-greeting">Välkommen!</h1>
+            <div style="font-size:13px;color:var(--ink3);margin-top:3px" id="dash-date"></div>
+          </div>
+          <button class="btn btn-s btn-sm" onclick="loadAll().then(()=>render('dash'))" title="Uppdatera">↻ Uppdatera</button>
+        </div>
+        <div id="next-up-wrap"></div>
+        <div class="stats-grid" id="stats"></div>
+        <div class="dash-grid">
+          <div class="dash-card">
+            <div class="dash-card-hd"><h3>⚡ Påminnelser</h3><button class="btn btn-g btn-xs" onclick="go('svc')">Se alla →</button></div>
+            <div class="dash-card-body" id="d-alerts"></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-hd" id="d-tasks-hd"><h3>📋 Uppgifter</h3><button class="btn btn-g btn-xs" onclick="go('tasks')">Se alla →</button></div>
+            <div class="dash-card-body" id="d-tasks"></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-hd"><h3>🆕 Senast tillagda</h3><button class="btn btn-g btn-xs" onclick="go('inv')">Se alla →</button></div>
+            <div class="dash-card-body" id="d-items"></div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-hd" id="d-eco-hd"><h3>💰 Ekonomi</h3><button class="btn btn-g btn-xs" onclick="go('eco')">Se mer →</button></div>
+            <div class="dash-card-body" id="d-eco"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVENTORY -->
+      <div class="page" id="p-inv">
+        <div class="sec-hd">
+          <div><h2>Inventarie</h2><p id="inv-cnt">0 saker</p></div>
+          <button class="btn btn-p" onclick="openItem()">+ Ny sak</button>
+        </div>
+        <div class="filter-row">
+          <div class="filter-chips" id="inv-chips"></div>
+          <select class="sort-sel" id="inv-sort" onchange="renderInv()">
+            <option value="newest">Nyast</option>
+            <option value="oldest">Äldst</option>
+            <option value="name">Namn A–Ö</option>
+            <option value="price-high">Pris ↓</option>
+            <option value="price-low">Pris ↑</option>
+          </select>
+        </div>
+        <div class="items-grid" id="inv-grid"></div>
+      </div>
+
+      <!-- ITEM DETAIL -->
+      <div class="page" id="p-detail"><div id="detail-body"></div></div>
+
+      <!-- CATEGORIES -->
+      <div class="page" id="p-cats">
+        <div class="sec-hd">
+          <div><h2>Kategorier</h2><p>Organisera era saker</p></div>
+          <button class="btn btn-p" onclick="openCat()">+ Ny kategori</button>
+        </div>
+        <div class="cats-grid" id="cg"></div>
+      </div>
+
+      <!-- TASKS -->
+      <div class="page" id="p-tasks">
+        <div class="sec-hd">
+          <div><h2>Uppgifter</h2><p id="tasks-cnt">0 aktiva</p></div>
+          <button class="btn btn-p" onclick="openTask()">+ Ny uppgift</button>
+        </div>
+        <div class="tasks-layout">
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:8px">Aktiva</div>
+            <div id="t-active"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:8px">Avklarade</div>
+            <div id="t-done"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SERVICE -->
+      <div class="page" id="p-svc">
+        <div class="sec-hd">
+          <div><h2>Service & underhåll</h2><p>Planerat och historik</p></div>
+          <button class="btn btn-p" onclick="openSvc()">+ Ny påminnelse</button>
+        </div>
+        <div class="page-tabs">
+          <button class="page-tab on" id="svc-tab-upcoming" onclick="switchSvcTab('upcoming')">Kommande</button>
+          <button class="page-tab" id="svc-tab-history" onclick="switchSvcTab('history')">Historik</button>
+        </div>
+        <div class="card" id="svc-panel-upcoming"><div id="svc-list"></div></div>
+        <div class="card" id="svc-panel-history" style="display:none"><div id="svc-history-list"></div></div>
+      </div>
+
+      <!-- WARRANTIES -->
+      <div class="page" id="p-warr">
+        <div class="sec-hd"><div><h2>Garantier</h2><p>Övervaka garantitider</p></div></div>
+        <div class="card"><div id="warr-list"></div></div>
+      </div>
+
+      <!-- RECEIPTS -->
+      <div class="page" id="p-receipts">
+        <div class="sec-hd">
+          <div><h2>Kvitton</h2><p>Spara och organisera kvitton</p></div>
+          <button class="btn btn-p" onclick="openReceipt()">+ Nytt kvitto</button>
+        </div>
+        <div class="card" id="receipts-list"></div>
+      </div>
+
+      <!-- ECONOMY -->
+      <div class="page" id="p-eco">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+          <div><h2 style="font-size:20px;font-weight:700;letter-spacing:-.4px">Ekonomi</h2><p style="font-size:13px;color:var(--ink3)">Månadsöversikt för familjen</p></div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <div class="month-nav">
+              <button onclick="ecoMonthStep(-1)">‹</button>
+              <span id="eco-month-lbl"></span>
+              <button onclick="ecoMonthStep(1)">›</button>
+            </div>
+            <button class="btn btn-p btn-sm" onclick="openTransModal()">+ Transaktion</button>
+            <button class="btn btn-s btn-sm" onclick="openImport()">⬆ Importera</button>
+          </div>
+        </div>
+        <div class="eco-header" id="eco-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);margin-bottom:14px">Utgifter per kategori</div>
+            <div id="eco-cats"></div>
+          </div>
+          <div class="card">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);margin-bottom:14px">Transaktioner</div>
+            <div id="eco-trans"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAMILY -->
+      <div class="page" id="p-family">
+        <div class="sec-hd"><div><h2>Familj</h2><p>Hantera medlemmar och inbjudningar</p></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div class="card" style="margin-bottom:14px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);margin-bottom:12px">Bjud in via e-post</div>
+              <div style="display:flex;gap:8px">
+                <input class="fi" id="inv-email" type="email" placeholder="namn@exempel.se" style="flex:1">
+                <button class="btn btn-p" onclick="sendInvite()">Skicka</button>
+              </div>
+            </div>
+            <div class="invite-box">
+              <div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Inbjudningskod</div>
+              <div class="invite-code" id="invite-code">———</div>
+              <button class="btn btn-s btn-sm" onclick="copyInvite()">📋 Kopiera kod</button>
+              <p style="font-size:11px;color:var(--ink3);margin-top:10px">Dela koden med familjemedlemmar</p>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:14px">
+              <button class="btn btn-s" style="flex:1" onclick="openCreateFamily()">+ Ny familj</button>
+              <button class="btn btn-s" style="flex:1" onclick="openJoinFamily()">Gå med i familj</button>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:14px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);margin-bottom:12px">Mina familjer</div>
+              <div id="families-list"></div>
+            </div>
+            <div class="card">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);margin-bottom:12px">Familjemedlemmar</div>
+              <div id="members-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="page" id="p-settings">
+        <div class="sec-hd"><div><h2>Inställningar</h2><p>Anpassa Vault efter dina önskemål</p></div></div>
+        <div style="max-width:600px">
+          <!-- Profile -->
+          <div class="set-section">
+            <div class="set-section-hd">Konto</div>
+            <div class="set-info-row">
+              <div class="set-av" id="set-av" style="background:#4D7CFF">V</div>
+              <div class="set-info">
+                <strong id="set-username-display">—</strong>
+                <span id="set-email-display">—</span>
+              </div>
+              <button class="btn btn-s btn-sm" onclick="openEditProfile()">✏️ Redigera</button>
+            </div>
+            <div class="set-row">
+              <div class="set-row-left">
+                <div class="set-row-label">Aktiv familj</div>
+                <div class="set-row-sub" id="set-family-display">—</div>
+              </div>
+              <button class="btn btn-s btn-sm" onclick="go('family')">Hantera →</button>
+            </div>
+            <div class="set-row">
+              <div class="set-row-left">
+                <div class="set-row-label">Lösenord</div>
+                <div class="set-row-sub">Byt ditt lösenord</div>
+              </div>
+              <button class="btn btn-s btn-sm" onclick="openChangePassword()">Byt →</button>
+            </div>
+          </div>
+          <!-- Appearance -->
+          <div class="set-section">
+            <div class="set-section-hd">Utseende</div>
+            <div class="set-row">
+              <div class="set-row-left">
+                <div class="set-row-label">Mörkt läge</div>
+                <div class="set-row-sub">Växla mellan mörkt och ljust tema</div>
+              </div>
+              <button class="btn btn-s btn-sm" onclick="toggleTheme()"><span id="theme-icon2">☀️</span> Byt tema</button>
+            </div>
+            <div class="set-row">
+              <div class="set-row-left">
+                <div class="set-row-label">Kompaktläge</div>
+                <div class="set-row-sub">Tätare layout med mindre mellanrum</div>
+              </div>
+              <label class="set-toggle">
+                <input type="checkbox" id="set-compact" onchange="toggleCompact(this)">
+                <span class="set-toggle-track"></span>
+              </label>
+            </div>
+          </div>
+          <!-- Notifications -->
+          <div class="set-section">
+            <div class="set-section-hd">Påminnelser</div>
+            <div class="set-row">
+              <div class="set-row-left">
+                <div class="set-row-label">Servicevarningar</div>
+                <div class="set-row-sub">Visa varning vid kommande service</div>
+              </div>
+              <label class="set-toggle">
+                <input type="checkbox" id="set-svc-warn" checked onchange="saveSettingsBool('svc_warn',this.checked)">
+                <span class="set-toggle-track"></span>
+              </label>
+            </div>
+            <div class="set-row">
+              <div class="set-row-left">
+                <div class="set-row-label">Garantivarningar</div>
+                <div class="set-row-sub">Visa varning vid utgående garantier</div>
+              </div>
+              <label class="set-toggle">
+                <input type="checkbox" id="set-warr-warn" checked onchange="saveSettingsBool('warr_warn',this.checked)">
+                <span class="set-toggle-track"></span>
+              </label>
+            </div>
+            <div class="set-row">
+              <div class="set-row-left">
+                <div class="set-row-label">Varningsdagar service</div>
+                <div class="set-row-sub">Antal dagar i förväg för servicevarning</div>
+              </div>
+              <select class="fi" id="set-svc-days" style="width:90px" onchange="saveSettingsVal('svc_warn_days',this.value)">
+                <option value="14">14 dagar</option>
+                <option value="30" selected>30 dagar</option>
+                <option value="60">60 dagar</option>
+                <option value="90">90 dagar</option>
+              </select>
+            </div>
+          </div>
+          <!-- Data -->
+          <div class="set-section">
+            <div class="set-section-hd">Data</div>
+            <div class="set-row">
+              <div class="set-row-left">
+                <div class="set-row-label">Valuta</div>
+                <div class="set-row-sub">Valuta för ekonomimodulen</div>
+              </div>
+              <select class="fi" id="set-currency" style="width:90px" onchange="saveSettingsVal('currency',this.value)">
+                <option value="SEK" selected>SEK</option>
+                <option value="NOK">NOK</option>
+                <option value="DKK">DKK</option>
+                <option value="EUR">EUR</option>
+              </select>
+            </div>
+            <div class="set-row">
+              <div class="set-row-left">
+                <div class="set-row-label">Rensa cache</div>
+                <div class="set-row-sub">Tar bort lokalt cachad data (checklists, historik)</div>
+              </div>
+              <button class="btn btn-d btn-sm" onclick="clearLocalCache()">🗑️ Rensa</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHECKLISTS -->
+      <div class="page" id="p-checklists">
+        <div class="sec-hd">
+          <div><h2>Listor</h2><p>Handlingslistor och checklistor</p></div>
+          <button class="btn btn-p" onclick="openChecklist()">+ Ny lista</button>
+        </div>
+        <div class="cl-board" id="cl-board"></div>
+      </div>
+
+      <!-- ADMIN -->
+      <div class="page" id="p-admin">
+        <div class="sec-hd"><div><h2>Administration</h2><p>Systemöversikt</p></div></div>
+        <div class="stats-grid" id="admin-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+          <div class="card">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);margin-bottom:12px">Familjemedlemmar</div>
+            <table style="width:100%;border-collapse:collapse;font-size:13px" id="admin-users"></table>
+          </div>
+          <div class="card">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);margin-bottom:12px">Senaste saker</div>
+            <table style="width:100%;border-collapse:collapse;font-size:13px" id="admin-items"></table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+
+  <!-- Mobile bottom tab bar -->
+  <nav class="mob-tabbar" aria-label="Snabbnavigering">
+    <div class="mob-tabbar-inner">
+      <button class="mob-tab on" onclick="go('dash');closeSidebar()"><span class="mt-icon">📊</span><span>Hem</span></button>
+      <button class="mob-tab" onclick="go('inv');closeSidebar()"><span class="mt-icon">📦</span><span>Saker</span></button>
+      <button class="mob-tab" onclick="go('tasks');closeSidebar()"><span class="mt-icon">✅</span><span>Uppgifter</span><span class="mt-dot" id="mt-tasks"></span></button>
+      <button class="mob-tab" onclick="go('eco');closeSidebar()"><span class="mt-icon">💰</span><span>Ekonomi</span></button>
+      <button class="mob-tab" onclick="toggleSidebar()"><span class="mt-icon">☰</span><span>Mer</span></button>
+    </div>
+  </nav>
+</div><!-- /app -->
+
+<!-- ── MODALS ─────────────────────────────────────────────────── -->
+
+<!-- Item form -->
+<div class="overlay" id="m-item" role="dialog" aria-modal="true" aria-labelledby="m-item-title">
+  <div class="modal modal-wide">
+    <h2 id="m-item-title">Ny sak</h2>
+    <div class="fg"><label>Foto</label>
+      <div class="phdrop" onclick="document.getElementById('ph-inp').click()" role="button" tabindex="0">
+        <div id="ph-prev">📷 <span style="font-size:12px">Klicka eller ta foto</span></div>
+        <input type="file" id="ph-inp" accept="image/*" capture="environment" onchange="uploadPhoto(this)">
+      </div>
+      <div class="uploading" id="ph-uploading"><div class="spin"></div>Laddar upp…</div>
+    </div>
+    <div class="fg"><label for="fi-name">Namn *</label><input type="text" class="fi" id="fi-name" placeholder="T.ex. Volvo V70, Diskmaskin Bosch"></div>
+    <div class="fr">
+      <div class="fg"><label for="fi-cat">Kategori</label><select class="fi" id="fi-cat"></select></div>
+      <div class="fg"><label for="fi-loc">Plats</label><input type="text" class="fi" id="fi-loc" placeholder="T.ex. Garaget, Köket"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label for="fi-purch">Inköpsdatum</label><input type="date" class="fi" id="fi-purch"></div>
+      <div class="fg"><label for="fi-price">Pris (kr)</label><input type="number" class="fi" id="fi-price" placeholder="0" min="0"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label for="fi-warr">Garanti t.o.m.</label><input type="date" class="fi" id="fi-warr"></div>
+      <div class="fg"><label for="fi-serial">Serienummer</label><input type="text" class="fi" id="fi-serial" placeholder="Valfritt"></div>
+    </div>
+    <div class="fg"><label for="fi-notes">Anteckningar</label><textarea class="fi" id="fi-notes" placeholder="Valfria anteckningar…"></textarea></div>
+    <input type="hidden" id="fi-id">
+    <div class="macts">
+      <button class="btn btn-s" onclick="closeModal('m-item')">Avbryt</button>
+      <button class="btn btn-p" onclick="saveItem()">Spara</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task form -->
+<div class="overlay" id="m-task" role="dialog" aria-modal="true" aria-labelledby="m-task-title">
+  <div class="modal">
+    <h2 id="m-task-title">Ny uppgift</h2>
+    <div class="fg"><label for="ti-title">Titel *</label><input type="text" class="fi" id="ti-title" placeholder="Vad behöver göras?"></div>
+    <div class="fg"><label for="ti-desc">Beskrivning</label><textarea class="fi" id="ti-desc" placeholder="Mer detaljer…" style="min-height:60px"></textarea></div>
+    <div class="fr">
+      <div class="fg"><label for="ti-prio">Prioritet</label>
+        <select class="fi" id="ti-prio">
+          <option value="urgent">🔴 Akut</option>
+          <option value="high">🟠 Hög</option>
+          <option value="medium" selected>🔵 Medel</option>
+          <option value="low">🟢 Låg</option>
+        </select>
+      </div>
+      <div class="fg"><label for="ti-cat">Kategori</label><input type="text" class="fi" id="ti-cat" placeholder="T.ex. Städning"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label for="ti-due">Förfallodatum</label><input type="date" class="fi" id="ti-due"></div>
+      <div class="fg"><label for="ti-assign">Tilldela</label><select class="fi" id="ti-assign"><option value="">Ingen tilldelad</option></select></div>
+    </div>
+    <input type="hidden" id="ti-id">
+    <div class="macts">
+      <button class="btn btn-s" onclick="closeModal('m-task')">Avbryt</button>
+      <button class="btn btn-p" onclick="saveTask()">Spara</button>
+    </div>
+  </div>
+</div>
+
+<!-- Service form -->
+<div class="overlay" id="m-svc" role="dialog" aria-modal="true" aria-labelledby="m-svc-title">
+  <div class="modal modal-wide">
+    <h2 id="m-svc-title">Ny service-påminnelse</h2>
+    <div class="fg"><label for="si-title">Titel *</label><input type="text" class="fi" id="si-title" placeholder="T.ex. Oljebyte, Besiktning, Luftfilter"></div>
+    <div class="fg"><label for="si-item">Kopplad sak</label><select class="fi" id="si-item"><option value="">Ingen</option></select></div>
+    <div class="fr">
+      <div class="fg"><label for="si-last">Senast utfört</label><input type="date" class="fi" id="si-last"></div>
+      <div class="fg"><label for="si-next">Nästa datum</label><input type="date" class="fi" id="si-next"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label for="si-int">Intervall (dagar)</label><input type="number" class="fi" id="si-int" value="0" placeholder="0 = engångs" min="0"></div>
+      <div class="fg"><label for="si-cost">Kostnad (kr)</label><input type="number" class="fi" id="si-cost" placeholder="Valfritt" min="0"></div>
+    </div>
+    <div class="fg"><label for="si-notes">Anteckningar</label><textarea class="fi" id="si-notes" style="min-height:60px" placeholder="T.ex. olja, filter, delar…"></textarea></div>
+    <!-- Economy link toggle -->
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px">
+        <input type="checkbox" id="si-eco-toggle" onchange="toggleSvcEcoLink(this)" style="width:16px;height:16px;accent-color:var(--accent)">
+        <span>Koppla till ekonomi (lägg till transaktion)</span>
+      </label>
+    </div>
+    <div id="si-eco-fields" style="display:none;border:1px solid var(--border);border-radius:var(--r2);padding:14px;background:var(--surface2);margin-bottom:14px">
+      <div style="display:flex;margin-bottom:12px;border-radius:var(--r2);overflow:hidden;border:1px solid var(--border)">
+        <button id="si-eco-mode-new" class="btn" style="flex:1;border-radius:0;border:none;background:var(--accent);color:#fff" onclick="setSvcEcoMode('new')" type="button">Ny transaktion</button>
+        <button id="si-eco-mode-link" class="btn" style="flex:1;border-radius:0;border:none;border-left:1px solid var(--border)" onclick="setSvcEcoMode('link')" type="button">Länka befintlig</button>
+      </div>
+      <div id="si-eco-new-fields">
+        <div class="fg"><label>Kategori</label><select class="fi" id="si-eco-cat"><option value="">Ingen kategori</option></select></div>
+      </div>
+      <div id="si-eco-link-fields" style="display:none">
+        <div class="fg"><label>Välj transaktion</label><select class="fi" id="si-eco-trans-sel"><option value="">Välj transaktion…</option></select></div>
+      </div>
+    </div>
+    <input type="hidden" id="si-id">
+    <div class="macts">
+      <button class="btn btn-s" onclick="closeModal('m-svc')">Avbryt</button>
+      <button class="btn btn-p" onclick="saveSvc()">Spara</button>
+    </div>
+  </div>
+</div>
+
+<!-- Category form -->
+<div class="overlay" id="m-cat" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:380px">
+    <h2>Kategori</h2>
+    <div class="fg"><label>Namn *</label><input type="text" class="fi" id="ci-name" placeholder="T.ex. Vitvaror, Fordon"></div>
+    <div class="fg"><label>Ikon & Färg</label>
+      <div class="emoji-row">
+        <button class="emoji-sel" id="ci-icon-btn" onclick="toggleEmojiPicker()" type="button" aria-label="Välj ikon">📦</button>
+        <div class="emoji-picker-wrap" style="flex:1">
+          <input type="text" class="fi" id="ci-icon" placeholder="Emoji…" maxlength="4" oninput="syncEmojiInput(this.value)" style="margin-bottom:0">
+          <div id="emoji-picker"></div>
+        </div>
+        <input type="color" class="fi" id="ci-color" value="#4D7CFF" style="width:50px;padding:4px;cursor:pointer">
+      </div>
+    </div>
+    <input type="hidden" id="ci-id">
+    <div class="macts">
+      <button class="btn btn-s" onclick="closeModal('m-cat')">Avbryt</button>
+      <button class="btn btn-p" onclick="saveCat()">Spara</button>
+    </div>
+  </div>
+</div>
+
+<!-- Receipt form -->
+<div class="overlay" id="m-receipt" role="dialog" aria-modal="true" aria-labelledby="m-receipt-title">
+  <div class="modal">
+    <h2 id="m-receipt-title">Nytt kvitto</h2>
+    <div class="fg"><label>Foto på kvitto</label>
+      <div class="phdrop" onclick="document.getElementById('ri-ph-inp').click()" role="button" tabindex="0">
+        <div id="ri-ph-prev">📷 <span style="font-size:12px">Klicka eller ta foto</span></div>
+        <input type="file" id="ri-ph-inp" accept="image/*" capture="environment" onchange="uploadReceiptPhoto(this)">
+      </div>
+      <div class="uploading" id="ri-uploading"><div class="spin"></div>Laddar upp…</div>
+    </div>
+    <div class="fg"><label for="ri-title">Titel *</label><input type="text" class="fi" id="ri-title" placeholder="T.ex. Vinterdäck Volvo"></div>
+    <div class="fr">
+      <div class="fg"><label for="ri-item">Kopplad sak</label><select class="fi" id="ri-item"><option value="">Ingen</option></select></div>
+      <div class="fg"><label for="ri-store">Butik / Leverantör</label><input type="text" class="fi" id="ri-store" placeholder="T.ex. Biltema"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label for="ri-amount">Belopp (kr)</label><input type="number" class="fi" id="ri-amount" placeholder="0" min="0"></div>
+      <div class="fg"><label for="ri-date">Datum</label><input type="date" class="fi" id="ri-date"></div>
+    </div>
+    <div class="fg"><label for="ri-notes">Anteckningar</label><textarea class="fi" id="ri-notes" style="min-height:60px" placeholder="Garantinr, artikelnummer…"></textarea></div>
+    <input type="hidden" id="ri-id">
+    <div class="macts">
+      <button class="btn btn-s" onclick="closeModal('m-receipt')">Avbryt</button>
+      <button class="btn btn-p" onclick="saveReceipt()">Spara</button>
+    </div>
+  </div>
+</div>
+
+<!-- Receipt view -->
+<div class="overlay" id="m-receipt-view" role="dialog" aria-modal="true" aria-labelledby="rv-title">
+  <div class="modal modal-wide">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 id="rv-title" style="margin:0"></h2>
+      <button class="btn btn-s btn-sm" id="rv-edit">✏️ Redigera</button>
+    </div>
+    <div id="rv-img" style="margin-bottom:16px;text-align:center;background:var(--surface2);border-radius:var(--r);min-height:60px;display:flex;align-items:center;justify-content:center;overflow:hidden"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div class="card" style="padding:12px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);margin-bottom:4px">Butik</div><div id="rv-store" style="font-weight:500"></div></div>
+      <div class="card" style="padding:12px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);margin-bottom:4px">Datum</div><div id="rv-date" style="font-weight:500"></div></div>
+      <div class="card" style="padding:12px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);margin-bottom:4px">Belopp</div><div id="rv-amount" style="font-weight:700;font-size:18px;font-family:var(--mono);color:var(--accent2)"></div></div>
+      <div class="card" style="padding:12px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);margin-bottom:4px">Sak</div><div id="rv-item" style="font-weight:500"></div></div>
+    </div>
+    <div style="font-size:13px;color:var(--ink2)" id="rv-notes"></div>
+    <div class="macts"><button class="btn btn-s" onclick="closeModal('m-receipt-view')">Stäng</button></div>
+  </div>
+</div>
+
+<!-- Transaction form -->
+<div class="overlay" id="m-trans" role="dialog" aria-modal="true" aria-labelledby="m-trans-title">
+  <div class="modal">
+    <h2 id="m-trans-title">Ny transaktion</h2>
+    <div class="fg"><label>Typ</label>
+      <div style="display:flex;gap:8px">
+        <button id="tt-expense" class="btn btn-d" style="flex:1" onclick="setTransType('expense')" type="button">− Utgift</button>
+        <button id="tt-income" class="btn btn-s" style="flex:1" onclick="setTransType('income')" type="button">+ Inkomst</button>
+      </div>
+    </div>
+    <div class="fg"><label for="tr-desc">Beskrivning *</label><input type="text" class="fi" id="tr-desc" placeholder="T.ex. ICA veckohandling"></div>
+    <div class="fr">
+      <div class="fg"><label for="tr-amount">Belopp (kr) *</label><input type="number" class="fi" id="tr-amount" placeholder="0" min="0"></div>
+      <div class="fg"><label for="tr-date">Datum *</label><input type="date" class="fi" id="tr-date"></div>
+    </div>
+    <div class="fg"><label for="tr-cat">Kategori</label><select class="fi" id="tr-cat"><option value="">Ingen kategori</option></select></div>
+    <div class="fg"><label for="tr-note">Notering</label><textarea class="fi" id="tr-note" style="min-height:60px" placeholder="Valfri notering…"></textarea></div>
+    <input type="hidden" id="tr-id">
+    <div class="macts">
+      <button class="btn btn-s" onclick="closeModal('m-trans')">Avbryt</button>
+      <button class="btn btn-p" onclick="saveTrans()">Spara</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import CSV -->
+<div class="overlay" id="m-import" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h2>Importera transaktioner</h2>
+    <p style="font-size:13px;color:var(--ink2);margin-bottom:16px">Importera CSV från din bank. Stöder de flesta svenska banker (SEB, Swedbank, Handelsbanken, Nordea).</p>
+    <div class="fg"><label>CSV / TXT-fil</label>
+      <div class="phdrop" onclick="document.getElementById('csv-inp').click()" role="button" tabindex="0">
+        <div id="csv-prev">📄 <span style="font-size:12px">Välj CSV-fil från din bank</span></div>
+        <input type="file" id="csv-inp" accept=".csv,.txt" onchange="handleCsvSelect(this)">
+      </div>
+    </div>
+    <div id="import-result" style="display:none;margin-top:14px" role="status" aria-live="polite"></div>
+    <div class="macts">
+      <button class="btn btn-s" onclick="closeModal('m-import')">Stäng</button>
+      <button class="btn btn-p" id="do-import" onclick="doImport()" style="display:none">Importera</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create family -->
+<div class="overlay" id="m-create-family" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:400px">
+    <h2>Skapa ny familj</h2>
+    <div class="fg"><label for="cf-name">Familjens namn *</label><input type="text" class="fi" id="cf-name" placeholder="T.ex. Familjen Svensson"></div>
+    <div class="macts">
+      <button class="btn btn-s" onclick="closeModal('m-create-family')">Avbryt</button>
+      <button class="btn btn-p" onclick="createFamily()">Skapa</button>
+    </div>
+  </div>
+</div>
+
+<!-- Join family -->
+<div class="overlay" id="m-join-family" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:400px">
+    <h2>Gå med i familj</h2>
+    <div class="fg"><label for="jf-code">Inbjudningskod</label>
+      <input type="text" class="fi" id="jf-code" placeholder="T.ex. A3F9K2" maxlength="6" style="text-transform:uppercase;font-family:var(--mono);letter-spacing:4px;text-align:center;font-size:20px" autocomplete="off">
+    </div>
+    <div class="macts">
+      <button class="btn btn-s" onclick="closeModal('m-join-family')">Avbryt</button>
+      <button class="btn btn-p" onclick="joinFamilyModal()">Gå med</button>
+    </div>
+  </div>
+</div>
+
+<!-- User menu -->
+<div class="overlay" id="m-user" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:300px">
+    <h2>Konto</h2>
+    <div style="margin-bottom:18px;font-size:13px;color:var(--ink2)" id="user-menu-info"></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-s" style="justify-content:center" onclick="go('settings');closeModal('m-user')">⚙️ Inställningar</button>
+      <button class="btn btn-s" style="justify-content:center" onclick="toggleTheme();closeModal('m-user')"><span id="theme-icon3">☀️</span> Byt tema</button>
+      <button class="btn btn-d" style="justify-content:center" onclick="logout()">Logga ut</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit profile -->
+<div class="overlay" id="m-edit-profile" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:400px">
+    <h2>Redigera profil</h2>
+    <div class="fg"><label for="ep-name">Namn</label><input type="text" class="fi" id="ep-name" placeholder="Ditt namn"></div>
+    <div class="macts">
+      <button class="btn btn-s" onclick="closeModal('m-edit-profile')">Avbryt</button>
+      <button class="btn btn-p" onclick="saveProfile()">Spara</button>
+    </div>
+  </div>
+</div>
+
+<!-- Change password -->
+<div class="overlay" id="m-change-pw" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:400px">
+    <h2>Byt lösenord</h2>
+    <div class="fg"><label for="cp-old">Nuvarande lösenord</label><input type="password" class="fi" id="cp-old" autocomplete="current-password"></div>
+    <div class="fg"><label for="cp-new">Nytt lösenord</label><input type="password" class="fi" id="cp-new" placeholder="Minst 6 tecken" autocomplete="new-password"></div>
+    <div class="fg"><label for="cp-new2">Bekräfta nytt lösenord</label><input type="password" class="fi" id="cp-new2" autocomplete="new-password"></div>
+    <div class="macts">
+      <button class="btn btn-s" onclick="closeModal('m-change-pw')">Avbryt</button>
+      <button class="btn btn-p" onclick="savePassword()">Byt</button>
+    </div>
+  </div>
+</div>
+
+<!-- Checklist create/edit -->
+<div class="overlay" id="m-checklist" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:400px">
+    <h2>Ny lista</h2>
+    <div class="fg"><label for="cli-title">Titel *</label><input type="text" class="fi" id="cli-title" placeholder="T.ex. Inköpslista, Packlista"></div>
+    <div class="fr">
+      <div class="fg"><label>Ikon</label><input type="text" class="fi" id="cli-icon" placeholder="📋" maxlength="4" style="text-align:center;font-size:20px"></div>
+      <div class="fg"><label>Färg</label><input type="color" class="fi" id="cli-color" value="#4D7CFF" style="padding:4px;cursor:pointer"></div>
+    </div>
+    <input type="hidden" id="cli-id">
+    <div class="macts">
+      <button class="btn btn-s" onclick="closeModal('m-checklist')">Avbryt</button>
+      <button class="btn btn-p" onclick="saveChecklist()">Spara</button>
+    </div>
+  </div>
+</div>
+
+<!-- Checklist detail -->
+<div class="overlay" id="m-cl-detail" role="dialog" aria-modal="true">
+  <div class="modal modal-wide">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h2 id="cl-detail-title" style="margin:0;font-size:16px"></h2>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-s btn-sm" onclick="editChecklistFromDetail()">✏️</button>
+        <button class="btn btn-s btn-sm" onclick="clearDoneItems()" title="Rensa avklarade">🗑️ Rensa klara</button>
+        <button class="btn btn-g btn-sm" onclick="closeModal('m-cl-detail')">✕</button>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--ink3);margin-bottom:8px" id="cl-detail-meta"></div>
+    <div class="cl-detail-progress-wrap"><div id="cl-detail-progress" style="width:0"></div></div>
+    <div id="cl-detail-items"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+      <input type="text" class="fi" id="cl-new-item" placeholder="Lägg till punkt…" style="flex:1" onkeydown="if(event.key==='Enter')addChecklistItem()">
+      <button class="btn btn-p" onclick="addChecklistItem()">+</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<!-- ── SCRIPTS ─────────────────────────────────────────────────── -->
+<!-- core -->
+<script src="js/core/state.js" defer></script>
+<script src="js/core/utils.js" defer></script>
+<script src="js/core/auth.js" defer></script>
+<script src="js/core/nav.js" defer></script>
+<!-- pages -->
+<script src="js/pages/dash.js" defer></script>
+<script src="js/pages/inv.js" defer></script>
+<script src="js/pages/tasks.js" defer></script>
+<script src="js/pages/svc.js" defer></script>
+<script src="js/pages/warr.js" defer></script>
+<script src="js/pages/receipts.js" defer></script>
+<script src="js/pages/eco.js" defer></script>
+<script src="js/pages/family.js" defer></script>
+<script src="js/pages/admin.js" defer></script>
+<script src="js/pages/settings.js" defer></script>
+<script src="js/pages/checklists.js" defer></script>
+</body>
+</html>

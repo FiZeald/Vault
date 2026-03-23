@@ -1,0 +1,113 @@
+// ── Family ─────────────────────────────────────────────────────────
+function renderFamily(){
+  const fam = A.families.find(f=>f.id===A.activeFamilyId) || A.families[0];
+  if(fam){
+    const ic = document.getElementById('invite-code');
+    if(ic) ic.textContent = fam.invite_code || '———';
+  }
+
+  document.getElementById('families-list').innerHTML = !A.families.length
+    ? `<p style="font-size:13px;color:var(--ink3)">Ingen familj — skapa eller gå med i en.</p>`
+    : A.families.map(f => {
+        const isAct = f.id === A.activeFamilyId;
+        const isOwner = f.family_role === 'owner';
+        return `<div class="fam-row ${isAct?'fam-row-act':''}">
+          <div class="fam-row-left">
+            <div class="fam-row-icon" style="background:${isOwner?'var(--accent-bg)':'var(--surface2)'}">
+              ${isOwner ? '👑' : '🏠'}
+            </div>
+            <div>
+              <div class="fam-row-name">${esc(f.name)}</div>
+              <div class="fam-row-meta">
+                Kod: <strong style="font-family:var(--mono);letter-spacing:2px">${esc(f.invite_code||'–')}</strong>
+                · ${isOwner ? '👑 Ägare' : '👤 Medlem'}
+              </div>
+            </div>
+          </div>
+          <div class="fam-row-acts">
+            ${isAct
+              ? '<span class="badge b-blue">Aktiv</span>'
+              : `<button class="btn btn-s btn-xs" onclick="switchFamily(${f.id})">Byt →</button>`}
+            ${isOwner
+              ? `<button class="btn btn-xs" style="background:var(--rose-bg);color:var(--rose);border:1px solid var(--rose)" onclick="deleteFamily(${f.id},'${esc(f.name)}')">🗑️ Ta bort</button>`
+              : `<button class="btn btn-xs" style="background:var(--surface2);color:var(--ink3);border:1px solid var(--border)" onclick="leaveFamily(${f.id})">Lämna</button>`}
+          </div>
+        </div>`;
+      }).join('');
+
+  document.getElementById('members-list').innerHTML = A.members.map(m => `
+    <div class="member-row">
+      <div class="member-av" style="background:${m.avatar_color||'#5B8EF0'}">${initials(m.username)}</div>
+      <div class="member-info">
+        <strong>${esc(m.username)}</strong>
+        <span>${esc(m.email)}</span>
+      </div>
+      <span class="${m.family_role==='owner'?'badge b-amber':'badge b-blue'}">
+        ${m.family_role==='owner'?'👑 Ägare':'Medlem'}
+      </span>
+    </div>`).join('');
+}
+
+async function deleteFamily(famId, famName) {
+  const msg = `Ta bort "${famName}"?\n\nDetta raderar ALLT: transaktioner, saker, uppgifter, kvitton och service för denna familj.\n\nDetta kan INTE ångras. Skriv "ta bort" för att bekräfta.`;
+  const input = prompt(msg);
+  if (input?.toLowerCase().trim() !== 'ta bort') {
+    if (input !== null) toast('Felaktig bekräftelse — familjen togs inte bort', 'err');
+    return;
+  }
+  try {
+    await api('POST', 'family/delete', { family_id: famId });
+    A.families = A.families.filter(f => f.id !== famId);
+    if (A.activeFamilyId === famId) {
+      A.activeFamilyId = A.families[0]?.id || null;
+      if (A.activeFamilyId) localStorage.setItem('vault_active_family', A.activeFamilyId);
+      else localStorage.removeItem('vault_active_family');
+    }
+    toast('🗑️ Familjen borttagen');
+    if (!A.families.length) { await loadAll(); go('family'); }
+    else { await loadAll(); go('family'); }
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function copyInvite(){
+  const fam = A.families.find(f=>f.id===A.activeFamilyId), code = fam?.invite_code||'';
+  try { await navigator.clipboard.writeText(code); toast('📋 Kod kopierad!'); }
+  catch { toast('Koden: '+code); }
+}
+async function sendInvite(){
+  const email = document.getElementById('inv-email').value.trim();
+  if(!email){ toast('E-post krävs','err'); return; }
+  try { await api('POST','family/invite',{email}); toast('✅ Inbjudan skickad!'); document.getElementById('inv-email').value=''; }
+  catch(e){ toast(e.message,'err'); }
+}
+async function leaveFamily(famId){
+  if(!confirm('Lämna familjen?')) return;
+  try {
+    await api('POST','family/leave',{family_id:famId});
+    toast('Du har lämnat familjen');
+    await loadAll();
+    A.families.length === 0 ? logout() : go('family');
+  } catch(e){ toast(e.message,'err'); }
+}
+function openCreateFamily(){ document.getElementById('cf-name').value=''; document.getElementById('m-create-family').classList.add('on'); }
+async function createFamily(){
+  const name = document.getElementById('cf-name').value.trim();
+  if(!name){ toast('Namn krävs','err'); return; }
+  try {
+    const f = await api('POST','family/create',{name});
+    A.families.push(f); A.activeFamilyId = f.id;
+    localStorage.setItem('vault_active_family', f.id);
+    closeModal('m-create-family'); toast('✅ Familj skapad!');
+    await loadAll(); go('family');
+  } catch(e){ toast(e.message,'err'); }
+}
+function openJoinFamily(){ document.getElementById('jf-code').value=''; document.getElementById('m-join-family').classList.add('on'); }
+async function joinFamilyModal(){
+  const code = document.getElementById('jf-code').value.trim().toUpperCase();
+  if(!code){ toast('Kod krävs','err'); return; }
+  try {
+    const f = await api('POST','family/join',{invite_code:code});
+    closeModal('m-join-family'); toast('✅ Välkommen till '+f.family_name+'!');
+    await loadAll(); go('family');
+  } catch(e){ toast(e.message,'err'); }
+}
