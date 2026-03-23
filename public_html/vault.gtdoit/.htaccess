@@ -4,9 +4,12 @@
 Options -Indexes
 RewriteEngine On
 
-# Force HTTPS (uncomment when SSL is configured)
-# RewriteCond %{HTTPS} off
-# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# PHP 8.1 (Hetzner KonsoleH — adjust version to what's enabled in your panel)
+AddHandler application/x-httpd-php81 .php
+
+# Force HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # Route API requests to api/index.php
 RewriteCond %{REQUEST_FILENAME} !-f
