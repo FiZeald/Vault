@@ -67,7 +67,7 @@ function r_reset(): never {
 }
 
 function user_payload(int $uid): array {
-    $s = get_db()->prepare('SELECT u.id,u.email,u.username,u.active_family_id,u.avatar_color,
+    $s = get_db()->prepare('SELECT u.id,u.email,u.username,u.active_family_id,u.avatar_color,u.avatar_url,
         f.name AS family_name,f.invite_code,uf.family_role
         FROM users u
         LEFT JOIN families f ON f.id=u.active_family_id
@@ -76,6 +76,39 @@ function user_payload(int $uid): array {
     $s->execute([$uid]); $r = $s->fetch();
     return ['id' => (int)$r['id'], 'email' => $r['email'], 'username' => $r['username'],
         'active_family_id' => $r['active_family_id'] ? (int)$r['active_family_id'] : null,
-        'avatar_color' => $r['avatar_color'], 'family_name' => $r['family_name'],
+        'avatar_color' => $r['avatar_color'], 'avatar_url' => $r['avatar_url'] ?: null,
+        'family_name' => $r['family_name'],
         'invite_code' => $r['invite_code'], 'family_role' => $r['family_role']];
+}
+
+function r_update_profile(): never {
+    $u  = require_auth();
+    $name = sf('username'); if (!$name) json_die(['error' => 'Namn krävs']);
+    get_db()->prepare('UPDATE users SET username=? WHERE id=?')->execute([$name, $u['id']]);
+    jout(user_payload($u['id']));
+}
+
+function r_upload_avatar(): never {
+    $u = require_auth();
+    if (!isset($_FILES['avatar'])) json_die(['error' => 'Ingen fil']);
+    $f = $_FILES['avatar'];
+    if ($f['error'] !== UPLOAD_ERR_OK) json_die(['error' => 'Fel ' . $f['error']]);
+    if ($f['size'] > 5 * 1024 * 1024) json_die(['error' => 'Max 5MB']);
+    $fi   = finfo_open(FILEINFO_MIME_TYPE);
+    $mime = finfo_file($fi, $f['tmp_name']);
+    finfo_close($fi);
+    $ok = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif'];
+    if (!isset($ok[$mime])) json_die(['error' => 'Tillåts: jpg,png,webp,gif']);
+    $name = 'av_' . $u['id'] . '_' . bin2hex(random_bytes(6)) . '.' . $ok[$mime];
+    if (!is_dir(UPLOAD_DIR)) mkdir(UPLOAD_DIR, 0755, true);
+    if (!move_uploaded_file($f['tmp_name'], UPLOAD_DIR . $name)) json_die(['error' => 'Kunde ej spara'], 500);
+    $url = UPLOAD_URL . $name;
+    get_db()->prepare('UPDATE users SET avatar_url=? WHERE id=?')->execute([$url, $u['id']]);
+    jout(['url' => $url]);
+}
+
+function r_delete_avatar(): never {
+    $u = require_auth();
+    get_db()->prepare('UPDATE users SET avatar_url=NULL WHERE id=?')->execute([$u['id']]);
+    jout(['ok' => true]);
 }

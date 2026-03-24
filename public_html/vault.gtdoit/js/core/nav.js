@@ -28,8 +28,10 @@ async function startApp(){
   app.style.display = 'flex';
   app.classList.add('on');
   if(A.user?.email === ADMIN_EMAIL) document.getElementById('ni-admin').style.display = '';
+  // Apply saved language
+  if(typeof applyI18n    === 'function') applyI18n();
+  if(typeof _syncPageTitles === 'function') _syncPageTitles();
   await loadAll();
-  if(typeof loadChecklistsLocal === 'function') loadChecklistsLocal();
   go('dash');
 }
 
@@ -40,14 +42,20 @@ async function loadAll(){
     A.activeFamilyId = A.families.find(f=>f.id===savedFam) ? savedFam : (A.families[0]?.id || null);
     updateSidebar();
     if(!A.activeFamilyId) return;
-    const [items,cats,tasks,svcs,members,receipts,ecoCats] = await Promise.all([
+    const [items,cats,tasks,svcs,members,receipts,ecoCats,ecoSum,ecoTrans] = await Promise.all([
       api('GET','items'), api('GET','categories'), api('GET','tasks'),
       api('GET','services'), api('GET','family/members'), api('GET','receipts'),
       api('GET','economy/categories'),
+      api('GET','economy/summary?month='+A.ecoMonth).catch(()=>null),
+      api('GET','economy/transactions?month='+A.ecoMonth).catch(()=>[]),
     ]);
     A.items=items; A.cats=cats; A.tasks=tasks; A.svcs=svcs;
     A.members=members; A.receipts=receipts; A.ecoBudgetCats=ecoCats;
+    A.ecoSummary=ecoSum; A.ecoTrans=ecoTrans||[];
     badges();
+    // Load checklists and activity from DB (non-blocking)
+    if(typeof loadChecklists === 'function') loadChecklists().catch(()=>{});
+    if(typeof loadActivity  === 'function') loadActivity().catch(()=>{});
   } catch(e){ console.error('loadAll:', e); }
 }
 
@@ -65,7 +73,15 @@ function updateSidebar(){
     if(nameEl) nameEl.textContent = A.user.username || '';
     if(emailEl) emailEl.textContent = A.user.email || '';
     const av = document.getElementById('sb-av');
-    if(av){ av.style.background = A.user.avatar_color||'#5B8EF0'; av.textContent = initials(A.user.username); }
+    if(av){
+      if(A.user.avatar_url){
+        av.style.background = 'transparent';
+        av.innerHTML = `<img src="${A.user.avatar_url}" alt="${initials(A.user.username)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      } else {
+        av.style.background = A.user.avatar_color||'#5B8EF0';
+        av.textContent = initials(A.user.username);
+      }
+    }
   }
 }
 
@@ -233,7 +249,7 @@ function openUserMenu(){
   if(info){
     info.innerHTML = `
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-        <div class="sb-av" style="background:${A.user?.avatar_color||'#5B8EF0'};width:44px;height:44px;font-size:16px" aria-hidden="true">${initials(A.user?.username)}</div>
+        <div class="sb-av" style="background:${A.user?.avatar_url?'transparent':A.user?.avatar_color||'#5B8EF0'};width:44px;height:44px;font-size:16px" aria-hidden="true">${A.user?.avatar_url?`<img src="${A.user.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:initials(A.user?.username)}</div>
         <div>
           <div style="font-weight:600">${esc(A.user?.username||'')}</div>
           <div style="font-size:12px;color:var(--ink3)">${esc(A.user?.email||'')}</div>
@@ -260,12 +276,12 @@ document.addEventListener('keydown', e => {
 // ── Boot ────────────────────────────────────────────────────────────
 (async()=>{
   const params = new URLSearchParams(window.location.search);
-  const joinCode = params.get('join'), resetToken = params.get('reset');
-  if(joinCode || resetToken) history.replaceState(null,'',window.location.pathname);
+  const joinCode = params.get('join'), resetToken = params.get('reset'), itemParam = params.get('item');
+  if(joinCode || resetToken || itemParam) history.replaceState(null,'',window.location.pathname);
   if(resetToken){ showResetForm(resetToken); return; }
   if(joinCode){
-    switchTab('join');
-    const jc = document.getElementById('j-code');
+    switchTab('reg');
+    const jc = document.getElementById('r-code');
     if(jc) jc.value = joinCode.toUpperCase();
     return;
   }
@@ -273,6 +289,11 @@ document.addEventListener('keydown', e => {
   try {
     A.user = await api('GET','auth/me');
     await startApp();
+    // Deep-link: open item from QR code scan
+    if(itemParam){
+      const iid = parseInt(itemParam);
+      if(iid) showDetail(iid);
+    }
   } catch {
     A.token = null;
     localStorage.removeItem('vault_t');

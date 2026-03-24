@@ -15,6 +15,8 @@ function saveSettingsVal(key, val){ setSetting(key, val); }
 
 function renderSettings(){
   const s = getSettings();
+  // Render avatar in settings
+  _renderSettingsAvatar();
   // Populate user info
   const u = A.user;
   const uname = document.getElementById('set-username-display');
@@ -35,8 +37,46 @@ function renderSettings(){
   _setSelect('set-svc-days',       getSetting('svc_warn_days', '30'));
   _setSelect('set-currency',       getSetting('currency', 'SEK'));
 
+  // Widget toggles
+  _setCheckbox('set-widget-tasks',    getSetting('widget_tasks',    true));
+  _setCheckbox('set-widget-eco',      getSetting('widget_eco',      true));
+  _setCheckbox('set-widget-service',  getSetting('widget_service',  true));
+  _setCheckbox('set-widget-recent',   getSetting('widget_recent',   true));
+  _setCheckbox('set-widget-activity', getSetting('widget_activity', true));
+  _setCheckbox('set-widget-chart',    getSetting('widget_value_chart', true));
+
   // Apply compact mode on load
   applyCompact();
+
+  // Load notification settings from API
+  loadNotifSettings();
+}
+
+// ── Notification settings ──────────────────────────────────────────
+async function loadNotifSettings(){
+  try {
+    const data = await api('GET','notifications');
+    _setCheckbox('set-notif-email', data.email_enabled);
+    const sdEl = document.getElementById('set-notif-svc-days');  if(sdEl) sdEl.value = data.email_service_days  || 7;
+    const wdEl = document.getElementById('set-notif-warr-days'); if(wdEl) wdEl.value = data.email_warranty_days || 30;
+  } catch { /* not critical */ }
+}
+
+async function saveNotifSettings(){
+  try {
+    await api('POST','notifications',{
+      email_enabled:      document.getElementById('set-notif-email')?.checked ? 1 : 0,
+      email_service_days: parseInt(document.getElementById('set-notif-svc-days')?.value||'7'),
+      email_warranty_days:parseInt(document.getElementById('set-notif-warr-days')?.value||'30'),
+    });
+    toast('✅ Notifikationsinställningar sparade!');
+  } catch(e){ toast(e.message,'err'); }
+}
+
+// ── Widget config ──────────────────────────────────────────────────
+function toggleWidget(key, cb){
+  setSetting('widget_'+key, cb.checked);
+  toast(cb.checked ? '✅ Widget visas' : 'Widget dold');
 }
 
 function _setCheckbox(id, val){
@@ -54,6 +94,60 @@ function toggleCompact(cb){
 }
 function applyCompact(){
   document.body.classList.toggle('compact', getSetting('compact', false));
+}
+
+// ── Avatar (profile picture) ───────────────────────────────────────
+function _renderSettingsAvatar(){
+  const wrap = document.getElementById('set-avatar-wrap');
+  if(!wrap) return;
+  const av = A.user;
+  if(av?.avatar_url){
+    wrap.innerHTML = `
+      <div class="set-av-photo" style="position:relative;display:inline-block">
+        <img src="${esc(av.avatar_url)}" alt="${esc(av.username)}"
+             style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--accent)">
+        <button class="set-av-del" onclick="deleteAvatar()" title="${t('settings.remove_photo')}">×</button>
+      </div>`;
+  } else {
+    wrap.innerHTML = `
+      <div class="sb-av" style="width:72px;height:72px;font-size:26px;background:${av?.avatar_color||'#5B8EF0'};border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">
+        ${initials(av?.username)}
+      </div>`;
+  }
+}
+
+async function uploadAvatar(input){
+  const file = input.files[0]; if(!file) return;
+  const fd = new FormData(); fd.append('avatar', file);
+  try {
+    toast(t('toast.uploading'));
+    const res = await fetch('api/auth/avatar', { method:'POST', headers:{'Authorization':'Bearer '+A.token}, body:fd });
+    if(!res.ok){ const e=await res.json(); throw new Error(e.error||'Fel'); }
+    const data = await res.json();
+    A.user.avatar_url = data.url;
+    updateSidebar();
+    _renderSettingsAvatar();
+    toast('✅ Profilbild uppdaterad!');
+  } catch(e){ toast(e.message,'err'); }
+  input.value = '';
+}
+
+async function deleteAvatar(){
+  if(!confirm('Ta bort profilbilden?')) return;
+  try {
+    await api('DELETE','auth/avatar');
+    A.user.avatar_url = null;
+    updateSidebar();
+    _renderSettingsAvatar();
+    toast('🗑️ Profilbild borttagen');
+  } catch(e){ toast(e.message,'err'); }
+}
+
+// ── Language switcher ──────────────────────────────────────────────
+function changeLang(lang){
+  if(typeof setLang === 'function') setLang(lang);
+  // Re-render settings to refresh translated labels
+  renderSettings();
 }
 
 // ── Edit profile modal ─────────────────────────────────────────────

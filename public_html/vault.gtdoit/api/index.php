@@ -18,6 +18,11 @@ require_once __DIR__ . '/../includes/routes/tasks.php';
 require_once __DIR__ . '/../includes/routes/services.php';
 require_once __DIR__ . '/../includes/routes/receipts.php';
 require_once __DIR__ . '/../includes/routes/economy.php';
+require_once __DIR__ . '/../includes/routes/checklists.php';
+require_once __DIR__ . '/../includes/routes/documents.php';
+require_once __DIR__ . '/../includes/routes/loans.php';
+require_once __DIR__ . '/../includes/routes/notifications.php';
+require_once __DIR__ . '/../includes/routes/activity.php';
 
 $route = trim($_GET['_route'] ?? '', '/');
 $parts = explode('/', $route);
@@ -35,6 +40,9 @@ try {
         $base==='auth' && $s1==='me'       && $m==='GET'  => r_me(),
         $base==='auth' && $s1==='forgot'   && $m==='POST' => r_forgot(),
         $base==='auth' && $s1==='reset'    && $m==='POST' => r_reset(),
+        $base==='auth' && $s1==='profile'  && $m==='PUT'  => r_update_profile(),
+        $base==='auth' && $s1==='avatar'   && $m==='POST' => r_upload_avatar(),
+        $base==='auth' && $s1==='avatar'   && $m==='DELETE' => r_delete_avatar(),
 
         // Family
         $base==='family' && $s1==='list'    && $m==='GET'  => fam_list(),
@@ -52,12 +60,23 @@ try {
         $base==='categories' && $id!==null && $m==='DELETE'     => cat_delete($id),
 
         // Items
-        $base==='items' && $m==='GET'   && $id===null           => item_list(),
-        $base==='items' && $m==='GET'   && $id!==null           => item_get($id),
-        $base==='items' && $m==='POST'  && $id===null           => item_create(),
-        $base==='items' && $m==='PUT'   && $id!==null           => item_update($id),
-        $base==='items' && $m==='DELETE'&& $id!==null           => item_delete($id),
-        $base==='upload'                && $m==='POST'           => upload_file(),
+        $base==='items' && $m==='GET'    && $id===null                            => item_list(),
+        $base==='items' && $m==='GET'    && $id!==null && $s2===''               => item_get($id),
+        $base==='items' && $m==='POST'   && $id===null                            => item_create(),
+        $base==='items' && $m==='PUT'    && $id!==null                            => item_update($id),
+        $base==='items' && $m==='DELETE' && $id!==null                            => item_delete($id),
+        $base==='items' && $m==='POST'   && $s1==='csv-import'                    => item_csv_import(),
+        // Documents
+        $base==='items' && $m==='GET'    && $id!==null && $s2==='documents'       => doc_list($id),
+        $base==='items' && $m==='POST'   && $id!==null && $s2==='documents'       => doc_upload($id),
+        $base==='documents' && $m==='DELETE' && $id!==null                        => doc_delete($id),
+        // Loans
+        $base==='items' && $m==='GET'    && $id!==null && $s2==='loans'           => loan_list($id),
+        $base==='items' && $m==='POST'   && $id!==null && $s2==='loans'           => loan_create($id),
+        $base==='loans' && $m==='POST'   && $id!==null && $s2==='return'          => loan_return($id),
+        $base==='loans' && $m==='DELETE' && $id!==null                            => loan_delete($id),
+        $base==='loans' && $m==='GET'    && $s1==='active'                        => loans_active(),
+        $base==='upload'                 && $m==='POST'                            => upload_file(),
 
         // Tasks
         $base==='tasks' && $m==='GET'                           => task_list(),
@@ -90,6 +109,24 @@ try {
         $base==='economy' && $s1==='categories'  && $m==='PUT'  && $id!==null => eco_cats_update($id),
         $base==='economy' && $s1==='categories'  && $m==='DELETE' && $id!==null => eco_cats_delete($id),
         $base==='economy' && $s1==='import'      && $m==='POST' => eco_import(),
+
+        // Checklists
+        $base==='checklists' && $m==='GET'    && $id===null && $s1===''            => cl_list(),
+        $base==='checklists' && $m==='POST'   && $id===null && $s1===''            => cl_create(),
+        $base==='checklists' && $m==='PUT'    && $id!==null && $s2===''            => cl_update($id),
+        $base==='checklists' && $m==='DELETE' && $id!==null && $s2===''            => cl_delete($id),
+        $base==='checklists' && $m==='POST'   && $id!==null && $s2==='items'       => cl_item_create($id),
+        $base==='checklists' && $m==='PUT'    && $s1==='items' && $id!==null       => cl_item_toggle($id),
+        $base==='checklists' && $m==='DELETE' && $s1==='items' && $id!==null       => cl_item_delete($id),
+        $base==='checklists' && $m==='POST'   && $id!==null && $s2==='clear-done'  => cl_clear_done($id),
+
+        // Notifications
+        $base==='notifications' && $m==='GET'  => notif_get(),
+        $base==='notifications' && $m==='POST' => notif_save(),
+
+        // Activity & snapshots
+        $base==='activity'   && $m==='GET'                   => activity_list(),
+        $base==='snapshots'  && $m==='GET'                   => inventory_snapshots_list(),
 
         default => json_die(['error' => 'Okänd route: ' . $route], 404),
     };

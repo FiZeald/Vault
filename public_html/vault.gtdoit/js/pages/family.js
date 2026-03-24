@@ -1,27 +1,50 @@
 // ── Family ─────────────────────────────────────────────────────────
 function renderFamily(){
   const fam = A.families.find(f=>f.id===A.activeFamilyId) || A.families[0];
-  if(fam){
-    const ic = document.getElementById('invite-code');
-    if(ic) ic.textContent = fam.invite_code || '———';
-  }
 
-  document.getElementById('families-list').innerHTML = !A.families.length
-    ? `<p style="font-size:13px;color:var(--ink3)">Ingen familj — skapa eller gå med i en.</p>`
-    : A.families.map(f => {
+  // Hero card
+  const heroName = document.getElementById('fam-hero-name');
+  if(heroName) heroName.textContent = fam?.name || 'Min familj';
+  const ic = document.getElementById('invite-code');
+  if(ic) ic.textContent = fam?.invite_code || '———';
+
+  // Member count badge
+  const cnt = document.getElementById('fam-member-count');
+  if(cnt) cnt.textContent = A.members.length ? A.members.length + ' st' : '';
+
+  // Members list
+  document.getElementById('members-list').innerHTML = A.members.length
+    ? A.members.map(m => {
+        const isOwner = m.family_role === 'owner';
+        const avContent = m.avatar_url
+          ? `<img src="${esc(m.avatar_url)}" alt="${initials(m.username)}">`
+          : initials(m.username);
+        return `
+        <div class="member-row">
+          <div class="member-av" style="background:${m.avatar_url?'transparent':m.avatar_color||'#5B8EF0'}">${avContent}</div>
+          <div class="member-info">
+            <strong>${esc(m.username)}</strong>
+            <span>${esc(m.email)}</span>
+          </div>
+          <span class="badge ${isOwner?'b-amber':'b-blue'}">${isOwner?'👑 Ägare':'Medlem'}</span>
+        </div>`;
+      }).join('')
+    : `<div style="padding:24px;text-align:center;font-size:13px;color:var(--ink3)">Inga medlemmar ännu</div>`;
+
+  // Families list
+  document.getElementById('families-list').innerHTML = A.families.length
+    ? A.families.map(f => {
         const isAct = f.id === A.activeFamilyId;
         const isOwner = f.family_role === 'owner';
-        return `<div class="fam-row ${isAct?'fam-row-act':''}">
+        return `
+        <div class="fam-row ${isAct?'fam-row-act':''}">
           <div class="fam-row-left">
             <div class="fam-row-icon" style="background:${isOwner?'var(--accent-bg)':'var(--surface2)'}">
-              ${isOwner ? '👑' : '🏠'}
+              ${isOwner?'👑':'🏠'}
             </div>
-            <div>
+            <div style="min-width:0">
               <div class="fam-row-name">${esc(f.name)}</div>
-              <div class="fam-row-meta">
-                Kod: <strong style="font-family:var(--mono);letter-spacing:2px">${esc(f.invite_code||'–')}</strong>
-                · ${isOwner ? '👑 Ägare' : '👤 Medlem'}
-              </div>
+              <div class="fam-row-meta">${isOwner?'Ägare':'Medlem'}</div>
             </div>
           </div>
           <div class="fam-row-acts">
@@ -29,23 +52,12 @@ function renderFamily(){
               ? '<span class="badge b-blue">Aktiv</span>'
               : `<button class="btn btn-s btn-xs" onclick="switchFamily(${f.id})">Byt →</button>`}
             ${isOwner
-              ? `<button class="btn btn-xs" style="background:var(--rose-bg);color:var(--rose);border:1px solid var(--rose)" onclick="deleteFamily(${f.id},'${esc(f.name)}')">🗑️ Ta bort</button>`
+              ? `<button class="btn btn-d btn-xs" onclick="deleteFamily(${f.id},'${esc(f.name)}')">🗑️</button>`
               : `<button class="btn btn-xs" style="background:var(--surface2);color:var(--ink3);border:1px solid var(--border)" onclick="leaveFamily(${f.id})">Lämna</button>`}
           </div>
         </div>`;
-      }).join('');
-
-  document.getElementById('members-list').innerHTML = A.members.map(m => `
-    <div class="member-row">
-      <div class="member-av" style="background:${m.avatar_color||'#5B8EF0'}">${initials(m.username)}</div>
-      <div class="member-info">
-        <strong>${esc(m.username)}</strong>
-        <span>${esc(m.email)}</span>
-      </div>
-      <span class="${m.family_role==='owner'?'badge b-amber':'badge b-blue'}">
-        ${m.family_role==='owner'?'👑 Ägare':'Medlem'}
-      </span>
-    </div>`).join('');
+      }).join('')
+    : `<div style="padding:24px;text-align:center;font-size:13px;color:var(--ink3)">Inga familjer — skapa eller gå med i en.</div>`;
 }
 
 async function deleteFamily(famId, famName) {

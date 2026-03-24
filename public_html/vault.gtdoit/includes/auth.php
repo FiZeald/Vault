@@ -63,6 +63,26 @@ function df(string $k): ?string { $v=trim((string)(body()[$k]??'')); if(!$v||$v=
 function jout(mixed $d, int $c=200): never { http_response_code($c); echo json_encode($d,JSON_UNESCAPED_UNICODE); exit; }
 function json_die(mixed $d, int $c=400): never { jout($d,$c); }
 
+// ── Activity log helper ───────────────────────────────────────────
+function log_act(int $family_id, ?int $user_id, ?string $username, string $action, string $entity_type, ?int $entity_id = null, ?string $entity_name = null): void {
+    try {
+        get_db()->prepare('INSERT INTO activity_log (family_id,user_id,username,action,entity_type,entity_id,entity_name) VALUES (?,?,?,?,?,?,?)')
+            ->execute([$family_id, $user_id, $username, $action, $entity_type, $entity_id, $entity_name]);
+    } catch (\Throwable $e) { /* non-fatal */ }
+}
+
+// ── Inventory snapshot helper ─────────────────────────────────────
+function update_snapshot(int $family_id): void {
+    try {
+        $db = get_db();
+        $s  = $db->prepare('SELECT COALESCE(SUM(price),0) AS total_value, COUNT(*) AS item_count FROM items WHERE family_id=?');
+        $s->execute([$family_id]);
+        $r  = $s->fetch();
+        $db->prepare('INSERT INTO inventory_snapshots (family_id,snapshot_date,total_value,item_count) VALUES (?,CURDATE(),?,?) ON DUPLICATE KEY UPDATE total_value=VALUES(total_value),item_count=VALUES(item_count)')
+            ->execute([$family_id, $r['total_value'], $r['item_count']]);
+    } catch (\Throwable $e) { /* non-fatal */ }
+}
+
 // ── Email / SMTP (native PHP mail as fallback) ────────────────────
 function send_email(string $to, string $subject, string $html): bool {
     $headers  = "MIME-Version: 1.0\r\n";

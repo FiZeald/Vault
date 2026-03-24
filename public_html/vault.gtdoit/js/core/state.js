@@ -2,7 +2,7 @@
 const ADMIN_EMAIL = 'admin@gtdoit.com';
 
 const A = {
-  token: localStorage.getItem('vault_t'),
+  token: localStorage.getItem('vault_t') || sessionStorage.getItem('vault_t'),
   user: null,
   families: [],
   activeFamilyId: null,
