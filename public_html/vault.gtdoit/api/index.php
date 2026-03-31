@@ -1,6 +1,10 @@
 <?php
 // ── Vault API — router ─────────────────────────────────────────────
 declare(strict_types=1);
+// Suppress PHP warnings/notices from contaminating JSON output
+error_reporting(0);
+ini_set('display_errors', '0');
+ob_start(); // Output buffer — cleared before JSON output so stray output can't corrupt response
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: https://vault.gtdoit.com');
 header('Access-Control-Allow-Headers: Authorization, Content-Type');

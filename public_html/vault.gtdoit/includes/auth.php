@@ -60,7 +60,7 @@ function ff(string $k, float $d=0): float { $v=body()[$k]??null; return($v===nul
 function df(string $k): ?string { $v=trim((string)(body()[$k]??'')); if(!$v||$v==='0000-00-00') return null; return preg_match('/^\d{4}-\d{2}-\d{2}$/',$v)?$v:null; }
 
 // ── Response helpers ──────────────────────────────────────────────
-function jout(mixed $d, int $c=200): never { http_response_code($c); echo json_encode($d,JSON_UNESCAPED_UNICODE); exit; }
+function jout(mixed $d, int $c=200): never { http_response_code($c); if(ob_get_level()) ob_clean(); echo json_encode($d,JSON_UNESCAPED_UNICODE); exit; }
 function json_die(mixed $d, int $c=400): never { jout($d,$c); }
 
 // ── Activity log helper ───────────────────────────────────────────
