@@ -1,5 +1,6 @@
 # Credentials — never commit
 public_html/vault.gtdoit/includes/config.php
+public_html/vault.gtdoit/.env
 
 # User uploads
 public_html/vault.gtdoit/uploads/*

@@ -78,3 +78,8 @@ RewriteRule ^ index.html [L]
   Order allow,deny
   Deny from all
 </FilesMatch>
+# Explicitly block dotfiles (.env, .htaccess in subdirs, etc.)
+<FilesMatch "^\.">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
