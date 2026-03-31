@@ -13,20 +13,26 @@ function renderFamily(){
   if(cnt) cnt.textContent = A.members.length ? A.members.length + ' st' : '';
 
   // Members list
+  const amOwner = A.members.some(m => m.id === A.user?.id && m.family_role === 'owner');
   document.getElementById('members-list').innerHTML = A.members.length
     ? A.members.map(m => {
         const isOwner = m.family_role === 'owner';
+        const isMe    = m.id === A.user?.id;
         const avContent = m.avatar_url
           ? `<img src="${esc(m.avatar_url)}" alt="${initials(m.username)}">`
           : initials(m.username);
+        const kickBtn = amOwner && !isOwner
+          ? `<button class="btn btn-d btn-xs" onclick="kickMember(${m.id},'${esc(m.username)}')" title="Sparka ut">✕</button>`
+          : '';
         return `
         <div class="member-row">
           <div class="member-av" style="background:${m.avatar_url?'transparent':m.avatar_color||'#5B8EF0'}">${avContent}</div>
           <div class="member-info">
-            <strong>${esc(m.username)}</strong>
+            <strong>${esc(m.username)}${isMe?' (du)':''}</strong>
             <span>${esc(m.email)}</span>
           </div>
           <span class="badge ${isOwner?'b-amber':'b-blue'}">${isOwner?'👑 Ägare':'Medlem'}</span>
+          ${kickBtn}
         </div>`;
       }).join('')
     : `<div style="padding:24px;text-align:center;font-size:13px;color:var(--ink3)">Inga medlemmar ännu</div>`;
@@ -61,10 +67,11 @@ function renderFamily(){
 }
 
 async function deleteFamily(famId, famName) {
-  const msg = `Ta bort "${famName}"?\n\nDetta raderar ALLT: transaktioner, saker, uppgifter, kvitton och service för denna familj.\n\nDetta kan INTE ångras. Skriv "ta bort" för att bekräfta.`;
+  const msg = t('family.delete.confirm').replace('{name}', famName);
+  const confirmWord = t('family.delete.confirm_word');
   const input = prompt(msg);
-  if (input?.toLowerCase().trim() !== 'ta bort') {
-    if (input !== null) toast('Felaktig bekräftelse — familjen togs inte bort', 'err');
+  if (input?.toLowerCase().trim() !== confirmWord) {
+    if (input !== null) toast(t('family.delete.wrong'), 'err');
     return;
   }
   try {
@@ -75,9 +82,8 @@ async function deleteFamily(famId, famName) {
       if (A.activeFamilyId) localStorage.setItem('vault_active_family', A.activeFamilyId);
       else localStorage.removeItem('vault_active_family');
     }
-    toast('🗑️ Familjen borttagen');
-    if (!A.families.length) { await loadAll(); go('family'); }
-    else { await loadAll(); go('family'); }
+    toast('🗑️ ' + t('family.delete.success'));
+    await loadAll(); go('family');
   } catch(e) { toast(e.message, 'err'); }
 }
 
@@ -92,11 +98,21 @@ async function sendInvite(){
   try { await api('POST','family/invite',{email}); toast('✅ Inbjudan skickad!'); document.getElementById('inv-email').value=''; }
   catch(e){ toast(e.message,'err'); }
 }
+async function kickMember(userId, username){
+  if(!confirm(t('family.kick.confirm').replace('{name}', username))) return;
+  try {
+    await api('POST','family/kick',{user_id:userId});
+    A.members = A.members.filter(m=>m.id!=userId);
+    toast('🚫 ' + t('family.kick.success').replace('{name}', username));
+    renderFamily();
+  } catch(e){ toast(e.message,'err'); }
+}
+
 async function leaveFamily(famId){
-  if(!confirm('Lämna familjen?')) return;
+  if(!confirm(t('family.leave.confirm'))) return;
   try {
     await api('POST','family/leave',{family_id:famId});
-    toast('Du har lämnat familjen');
+    toast(t('family.leave.success'));
     await loadAll();
     A.families.length === 0 ? logout() : go('family');
   } catch(e){ toast(e.message,'err'); }

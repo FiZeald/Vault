@@ -51,6 +51,8 @@ try {
         $base==='family' && $s1==='join'    && $m==='POST' => fam_join(),
         $base==='family' && $s1==='switch'  && $m==='POST' => fam_switch(),
         $base==='family' && $s1==='leave'   && $m==='POST' => fam_leave(),
+        $base==='family' && $s1==='kick'    && $m==='POST' => fam_kick(),
+        $base==='family' && $s1==='delete'  && $m==='POST' => fam_delete(),
         $base==='family' && $s1==='invite'  && $m==='POST' => fam_invite_email(),
 
         // Categories
@@ -109,6 +111,11 @@ try {
         $base==='economy' && $s1==='categories'  && $m==='PUT'  && $id!==null => eco_cats_update($id),
         $base==='economy' && $s1==='categories'  && $m==='DELETE' && $id!==null => eco_cats_delete($id),
         $base==='economy' && $s1==='import'      && $m==='POST' => eco_import(),
+        $base==='economy' && $s1==='imports'     && $m==='GET'  => eco_imports_list(),
+        $base==='economy' && $s1==='imports'     && $m==='DELETE' && $id!==null => eco_import_delete($id),
+        $base==='economy' && $s1==='cat-rules'   && $m==='GET'  => eco_cat_rules_list(),
+        $base==='economy' && $s1==='cat-rules'   && $m==='POST' && $id===null  => eco_cat_rules_create(),
+        $base==='economy' && $s1==='cat-rules'   && $m==='DELETE' && $id!==null => eco_cat_rules_delete($id),
 
         // Checklists
         $base==='checklists' && $m==='GET'    && $id===null && $s1===''            => cl_list(),

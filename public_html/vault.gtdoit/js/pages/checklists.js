@@ -178,7 +178,9 @@ function editChecklistFromDetail() {
   if (!cl) return;
   closeModal('m-cl-detail');
   document.getElementById('cli-title').value = cl.title;
-  document.getElementById('cli-icon').value  = cl.icon  || '📋';
+  const clIcon = cl.icon || '📋';
+  document.getElementById('cli-icon').value  = clIcon;
+  const clBtn = document.getElementById('cli-icon-btn'); if(clBtn) clBtn.textContent = clIcon;
   document.getElementById('cli-color').value = cl.color || '#4F7FFF';
   document.getElementById('cli-id').value    = cl.id;
   document.getElementById('m-checklist').classList.add('on');

@@ -66,17 +66,27 @@ function r_reset(): never {
     jout(['ok' => true]);
 }
 
+function _users_has_avatar_url(): bool {
+    static $has = null;
+    if ($has === null) {
+        try { get_db()->query('SELECT avatar_url FROM users LIMIT 0'); $has = true; }
+        catch (\Throwable $e) { $has = false; }
+    }
+    return $has;
+}
+
 function user_payload(int $uid): array {
-    $s = get_db()->prepare('SELECT u.id,u.email,u.username,u.active_family_id,u.avatar_color,u.avatar_url,
+    $avatarCol = _users_has_avatar_url() ? ',u.avatar_url' : '';
+    $s = get_db()->prepare("SELECT u.id,u.email,u.username,u.active_family_id,u.avatar_color{$avatarCol},
         f.name AS family_name,f.invite_code,uf.family_role
         FROM users u
         LEFT JOIN families f ON f.id=u.active_family_id
         LEFT JOIN user_families uf ON uf.user_id=u.id AND uf.family_id=u.active_family_id
-        WHERE u.id=?');
+        WHERE u.id=?");
     $s->execute([$uid]); $r = $s->fetch();
     return ['id' => (int)$r['id'], 'email' => $r['email'], 'username' => $r['username'],
         'active_family_id' => $r['active_family_id'] ? (int)$r['active_family_id'] : null,
-        'avatar_color' => $r['avatar_color'], 'avatar_url' => $r['avatar_url'] ?: null,
+        'avatar_color' => $r['avatar_color'], 'avatar_url' => $r['avatar_url'] ?? null,
         'family_name' => $r['family_name'],
         'invite_code' => $r['invite_code'], 'family_role' => $r['family_role']];
 }
@@ -103,12 +113,14 @@ function r_upload_avatar(): never {
     if (!is_dir(UPLOAD_DIR)) mkdir(UPLOAD_DIR, 0755, true);
     if (!move_uploaded_file($f['tmp_name'], UPLOAD_DIR . $name)) json_die(['error' => 'Kunde ej spara'], 500);
     $url = UPLOAD_URL . $name;
-    get_db()->prepare('UPDATE users SET avatar_url=? WHERE id=?')->execute([$url, $u['id']]);
+    if (_users_has_avatar_url())
+        get_db()->prepare('UPDATE users SET avatar_url=? WHERE id=?')->execute([$url, $u['id']]);
     jout(['url' => $url]);
 }
 
 function r_delete_avatar(): never {
     $u = require_auth();
-    get_db()->prepare('UPDATE users SET avatar_url=NULL WHERE id=?')->execute([$u['id']]);
+    if (_users_has_avatar_url())
+        get_db()->prepare('UPDATE users SET avatar_url=NULL WHERE id=?')->execute([$u['id']]);
     jout(['ok' => true]);
 }

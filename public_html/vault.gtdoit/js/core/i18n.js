@@ -83,6 +83,37 @@ const TRANSLATIONS = {
     'tasks.priority.medium': 'Medel',
     'tasks.priority.low':    'Låg',
 
+    // Dashboard spotlight & misc
+    'dash.spotlight.urgent':    'Akut uppgift',
+    'dash.spotlight.svc_over':  'Försenad service',
+    'dash.spotlight.high':      'Hög prioritet',
+    'dash.spotlight.warr':      'Garanti snart ut',
+    'dash.days_overdue':        'dagar försenad',
+    'dash.days_left':           'dagar kvar',
+    'dash.overdue':             'Försenad',
+    'dash.show':                'Visa →',
+    'dash.widget.tasks.empty':  '🎉 Alla uppgifter klara!',
+    'dash.widget.tasks.add':    '+ Snabblägg uppgift…',
+    'dash.widget.svc.empty':    'Ingen kommande service',
+    'dash.widget.items.empty':  'Inga saker ännu',
+
+    // Dashboard stats
+    'dash.stat.spent':          'av inkomst spenderat',
+    'dash.stat.nodata':         'Inga data denna månad',
+    'dash.stat.items':          'Saker',
+    'dash.stat.items.total':    'totalt',
+    'dash.stat.items.cats':     'kategorier',
+    'dash.stat.tasks.active':   'Aktiva uppgifter',
+    'dash.stat.tasks.alldone':  'Uppgifter klara!',
+    'dash.stat.tasks.done':     'avklarade',
+    'dash.stat.tasks.add':      'Lägg till uppgifter',
+    'dash.stat.svc.overdue':    'Service försenad',
+    'dash.stat.svc.soon':       'Service snart',
+    'dash.stat.svc.label':      'Service',
+    'dash.stat.svc.scheduled':  'schemalagda',
+    'dash.stat.svc.empty':      'Inget inlagt',
+    'dash.stat.svc.within30':   'inom 30 dagar',
+
     // Economy
     'eco.balance':  'Nettosaldo',
     'eco.income':   '↑ Inkomst',
@@ -148,9 +179,17 @@ const TRANSLATIONS = {
     'modal.checklist.new': 'Ny lista',
 
     // Family
-    'family.title':      'Familj',
-    'family.invite_code':'Inbjudningskod',
-    'family.members':    'Medlemmar',
+    'family.title':                'Familj',
+    'family.invite_code':          'Inbjudningskod',
+    'family.members':              'Medlemmar',
+    'family.delete.confirm':       'Ta bort "{name}"?\n\nDetta raderar ALLT: transaktioner, saker, uppgifter, kvitton och service.\n\nKan INTE ångras. Skriv "ta bort" för att bekräfta.',
+    'family.delete.confirm_word':  'ta bort',
+    'family.delete.wrong':         'Felaktig bekräftelse — familjen togs inte bort',
+    'family.delete.success':       'Familjen borttagen',
+    'family.leave.confirm':        'Lämna familjen?',
+    'family.leave.success':        'Du har lämnat familjen',
+    'family.kick.confirm':         'Sparka ut "{name}" ur familjen?',
+    'family.kick.success':         '{name} sparkades ut',
 
     // Loans
     'loan.loaned_to':   'Låntagare',
@@ -200,6 +239,83 @@ const TRANSLATIONS = {
     'auth.username':  'Namn',
     'auth.logout':    'Logga ut',
     'auth.forgot':    'Glömt lösenord?',
+
+    // Categories
+    'modal.cat.new':       'Ny kategori',
+    'modal.cat.edit':      'Redigera kategori',
+    'cats.sub':            'Organisera era saker',
+    'cats.add':            'Ny kategori',
+    'cats.add_sub':        'Lägg till',
+
+    // Page subtitles
+    'svc.sub':             'Planerat och historik',
+    'warr.sub':            'Övervaka garantitider',
+    'receipts.sub':        'Spara och organisera kvitton',
+    'checklists.sub':      'Handlingslistor och checklistor',
+    'admin.sub':           'Systemöversikt',
+    'add.checklists':      '+ Ny lista',
+
+    // Task filters/columns
+    'filter.all_priority': 'Alla prioriteter',
+    'filter.all_persons':  'Alla personer',
+    'sort.priority':       'Sortera: Prioritet',
+    'sort.due':            'Sortera: Förfallodatum',
+    'sort.newest':         'Sortera: Nyast',
+    'tasks.col.active':    'Aktiva',
+    'tasks.col.done':      'Avklarade',
+    'tasks.mine':          'Tilldelad mig',
+    'tasks.filter.urgent': '🔴 Brådskande',
+    'tasks.filter.high':   '🟡 Hög',
+    'tasks.filter.medium': '🔵 Medium',
+    'tasks.filter.low':    '🟢 Låg',
+
+    // Service tabs
+    'svc.tab.upcoming':    'Kommande',
+    'svc.tab.history':     'Historik',
+
+    // Economy
+    'eco.tab.overview':    'Översikt',
+    'eco.tab.trans':       'Transaktioner',
+    'eco.tab.budget':      'Budget',
+    'eco.tab.savings':     'Sparande',
+    'eco.tab.subs':        'Abonnemang',
+    'eco.tab.imports':     'Importer',
+    'eco.imports.title':   'Importhistorik',
+    'eco.imports.sub':     'CSV-importer och deras transaktioner',
+    'eco.catrules.title':  'Kategoriregler',
+    'eco.catrules.sub':    'Inlärda regler för automatisk kategorisering',
+    'eco.qa.expense':      'Utgift',
+    'eco.qa.income':       'Inkomst',
+    'eco.qa.import':       'Importera',
+    'eco.qa.budget':       'Budget',
+    'eco.scope.shared':    '👥 Familjen',
+    'eco.scope.personal':  '👤 Min',
+
+    // Family
+    'family.eyebrow':      'Aktiv familj',
+    'family.copy_code':    '📋 Kopiera',
+    'family.send_invite':  'Skicka →',
+    'family.new':          '＋ Ny familj',
+    'family.join_btn':     '🔗 Gå med',
+    'family.section.members':  '👥 Medlemmar',
+    'family.section.families': '🏠 Mina familjer',
+
+    // Transaction modal
+    'modal.trans.expense':  '− Utgift',
+    'modal.trans.income':   '+ Inkomst',
+    'modal.trans.shared':   '👥 Dela med familjen',
+    'modal.trans.personal': '🔒 Bara jag',
+
+    // Auth
+    'auth.remember':        'Kom ihåg mig',
+    'auth.login_btn':       'Logga in →',
+    'auth.register_btn':    'Skapa konto →',
+    'auth.reset.hint':      'Ange din e-post så skickar vi en återställningslänk.',
+    'auth.reset.send':      'Skicka länk →',
+    'auth.back_login':      '← Tillbaka till inloggning',
+
+    // Navigation detail
+    'nav.detail': 'Detaljer',
   },
 
   en: {
@@ -282,6 +398,37 @@ const TRANSLATIONS = {
     'tasks.priority.medium': 'Medium',
     'tasks.priority.low':    'Low',
 
+    // Dashboard spotlight & misc
+    'dash.spotlight.urgent':    'Urgent task',
+    'dash.spotlight.svc_over':  'Overdue service',
+    'dash.spotlight.high':      'High priority',
+    'dash.spotlight.warr':      'Warranty expiring',
+    'dash.days_overdue':        'days overdue',
+    'dash.days_left':           'days left',
+    'dash.overdue':             'Overdue',
+    'dash.show':                'View →',
+    'dash.widget.tasks.empty':  '🎉 All tasks done!',
+    'dash.widget.tasks.add':    '+ Quick add task…',
+    'dash.widget.svc.empty':    'No upcoming service',
+    'dash.widget.items.empty':  'No items yet',
+
+    // Dashboard stats
+    'dash.stat.spent':          'of income spent',
+    'dash.stat.nodata':         'No data this month',
+    'dash.stat.items':          'Items',
+    'dash.stat.items.total':    'total',
+    'dash.stat.items.cats':     'categories',
+    'dash.stat.tasks.active':   'Active tasks',
+    'dash.stat.tasks.alldone':  'Tasks done!',
+    'dash.stat.tasks.done':     'completed',
+    'dash.stat.tasks.add':      'Add tasks',
+    'dash.stat.svc.overdue':    'Service overdue',
+    'dash.stat.svc.soon':       'Service soon',
+    'dash.stat.svc.label':      'Service',
+    'dash.stat.svc.scheduled':  'scheduled',
+    'dash.stat.svc.empty':      'Nothing added',
+    'dash.stat.svc.within30':   'within 30 days',
+
     // Economy
     'eco.balance':  'Net balance',
     'eco.income':   '↑ Income',
@@ -347,9 +494,17 @@ const TRANSLATIONS = {
     'modal.checklist.new':'New list',
 
     // Family
-    'family.title':      'Family',
-    'family.invite_code':'Invite code',
-    'family.members':    'Members',
+    'family.title':                'Family',
+    'family.invite_code':          'Invite code',
+    'family.members':              'Members',
+    'family.delete.confirm':       'Delete "{name}"?\n\nThis will permanently delete EVERYTHING: transactions, items, tasks, receipts and services.\n\nCANNOT be undone. Type "delete" to confirm.',
+    'family.delete.confirm_word':  'delete',
+    'family.delete.wrong':         'Wrong confirmation — family was not deleted',
+    'family.delete.success':       'Family deleted',
+    'family.leave.confirm':        'Leave this family?',
+    'family.leave.success':        'You have left the family',
+    'family.kick.confirm':         'Remove "{name}" from the family?',
+    'family.kick.success':         '{name} was removed',
 
     // Loans
     'loan.loaned_to':   'Borrower',
@@ -399,6 +554,83 @@ const TRANSLATIONS = {
     'auth.username': 'Name',
     'auth.logout':   'Log out',
     'auth.forgot':   'Forgot password?',
+
+    // Categories
+    'modal.cat.new':       'New category',
+    'modal.cat.edit':      'Edit category',
+    'cats.sub':            'Organize your items',
+    'cats.add':            'New category',
+    'cats.add_sub':        'Add',
+
+    // Page subtitles
+    'svc.sub':             'Planned and history',
+    'warr.sub':            'Monitor warranty periods',
+    'receipts.sub':        'Save and organize receipts',
+    'checklists.sub':      'Action lists and checklists',
+    'admin.sub':           'System overview',
+    'add.checklists':      '+ New list',
+
+    // Task filters/columns
+    'filter.all_priority': 'All priorities',
+    'filter.all_persons':  'All people',
+    'sort.priority':       'Sort: Priority',
+    'sort.due':            'Sort: Due date',
+    'sort.newest':         'Sort: Newest',
+    'tasks.col.active':    'Active',
+    'tasks.col.done':      'Completed',
+    'tasks.mine':          'Assigned to me',
+    'tasks.filter.urgent': '🔴 Urgent',
+    'tasks.filter.high':   '🟡 High',
+    'tasks.filter.medium': '🔵 Medium',
+    'tasks.filter.low':    '🟢 Low',
+
+    // Service tabs
+    'svc.tab.upcoming':    'Upcoming',
+    'svc.tab.history':     'History',
+
+    // Economy
+    'eco.tab.overview':    'Overview',
+    'eco.tab.trans':       'Transactions',
+    'eco.tab.budget':      'Budget',
+    'eco.tab.savings':     'Savings',
+    'eco.tab.subs':        'Subscriptions',
+    'eco.tab.imports':     'Imports',
+    'eco.imports.title':   'Import history',
+    'eco.imports.sub':     'CSV imports and their transactions',
+    'eco.catrules.title':  'Category rules',
+    'eco.catrules.sub':    'Learned rules for automatic categorization',
+    'eco.qa.expense':      'Expense',
+    'eco.qa.income':       'Income',
+    'eco.qa.import':       'Import',
+    'eco.qa.budget':       'Budget',
+    'eco.scope.shared':    '👥 Family',
+    'eco.scope.personal':  '👤 Mine',
+
+    // Family
+    'family.eyebrow':      'Active family',
+    'family.copy_code':    '📋 Copy',
+    'family.send_invite':  'Send →',
+    'family.new':          '+ New family',
+    'family.join_btn':     '🔗 Join',
+    'family.section.members':  '👥 Members',
+    'family.section.families': '🏠 My families',
+
+    // Transaction modal
+    'modal.trans.expense':  '− Expense',
+    'modal.trans.income':   '+ Income',
+    'modal.trans.shared':   '👥 Share with family',
+    'modal.trans.personal': '🔒 Only me',
+
+    // Auth
+    'auth.remember':        'Remember me',
+    'auth.login_btn':       'Log in →',
+    'auth.register_btn':    'Create account →',
+    'auth.reset.hint':      'Enter your email and we\'ll send a reset link.',
+    'auth.reset.send':      'Send link →',
+    'auth.back_login':      '← Back to login',
+
+    // Navigation detail
+    'nav.detail': 'Details',
   }
 };
 
@@ -457,6 +689,7 @@ function _syncPageTitles(){
     PAGE_TITLES.admin      = t('nav.admin');
     PAGE_TITLES.settings   = t('nav.settings');
     PAGE_TITLES.checklists = t('nav.checklists');
+    PAGE_TITLES.detail     = t('nav.detail');
   }
   if(typeof ADD_LABELS !== 'undefined'){
     ADD_LABELS.inv      = t('add.inv');

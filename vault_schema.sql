@@ -171,6 +171,7 @@ CREATE TABLE transactions (
     note        TEXT          NULL,
     trans_date  DATE          NOT NULL,
     source_file VARCHAR(200)  NULL,
+    scope       ENUM('personal','shared') NOT NULL DEFAULT 'shared',
     created_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_tr_fam  FOREIGN KEY (family_id)   REFERENCES families(id)          ON DELETE CASCADE,
     CONSTRAINT fk_tr_user FOREIGN KEY (created_by)  REFERENCES users(id)             ON DELETE CASCADE,
@@ -312,3 +313,43 @@ CREATE INDEX idx_loan_item ON item_loans        (item_id);
 CREATE INDEX idx_loan_ret  ON item_loans        (family_id, returned_at);
 CREATE INDEX idx_snap_fam  ON inventory_snapshots (family_id, snapshot_date);
 CREATE INDEX idx_act_fam   ON activity_log      (family_id, created_at DESC);
+
+-- ── v4.0 — Economy 2.0: Import tracking + Hash dedup + Self-learning cat rules ──
+-- Existing installs: run only these ALTER/CREATE statements.
+-- New installs: included automatically in the full schema run.
+
+ALTER TABLE transactions
+    ADD COLUMN import_id INT UNSIGNED NULL DEFAULT NULL
+        COMMENT 'Reference to import batch; NULL = manually entered',
+    ADD COLUMN hash CHAR(40) NULL DEFAULT NULL
+        COMMENT 'SHA1(trans_date|amount|description) for duplicate detection';
+
+CREATE UNIQUE INDEX uq_tr_hash   ON transactions (family_id, hash);
+CREATE        INDEX idx_tr_import ON transactions (import_id);
+
+CREATE TABLE imports (
+    id             INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
+    family_id      INT UNSIGNED  NOT NULL,
+    created_by     INT UNSIGNED  NOT NULL,
+    filename       VARCHAR(200)  NOT NULL,
+    imported_count SMALLINT      NOT NULL DEFAULT 0,
+    skipped_count  SMALLINT      NOT NULL DEFAULT 0,
+    dupe_count     SMALLINT      NOT NULL DEFAULT 0,
+    created_at     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_imp_fam  FOREIGN KEY (family_id)  REFERENCES families(id) ON DELETE CASCADE,
+    CONSTRAINT fk_imp_user FOREIGN KEY (created_by) REFERENCES users(id)    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE cat_rules (
+    id          INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
+    family_id   INT UNSIGNED  NOT NULL,
+    keyword     VARCHAR(100)  NOT NULL,
+    category_id INT UNSIGNED  NOT NULL,
+    created_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_cr (family_id, keyword),
+    CONSTRAINT fk_cr_fam FOREIGN KEY (family_id)   REFERENCES families(id)          ON DELETE CASCADE,
+    CONSTRAINT fk_cr_cat FOREIGN KEY (category_id) REFERENCES budget_categories(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE INDEX idx_imp_fam ON imports   (family_id, created_at DESC);
+CREATE INDEX idx_cr_fam  ON cat_rules (family_id);

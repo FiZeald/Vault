@@ -228,8 +228,5 @@ async function delSvc(id){
 
 // Helper used in item detail for per-item service history
 function getItemSvcHistory(itemId){
-  return getSvcHistory().filter(h => {
-    const sv = A.svcs.find(s=>s.id===h.svcId);
-    return sv ? sv.item_id == itemId : false;
-  });
+  return getSvcHistory().filter(h => h.itemId == itemId);
 }

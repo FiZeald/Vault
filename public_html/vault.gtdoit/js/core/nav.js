@@ -32,7 +32,14 @@ async function startApp(){
   if(typeof applyI18n    === 'function') applyI18n();
   if(typeof _syncPageTitles === 'function') _syncPageTitles();
   await loadAll();
-  go('dash');
+  const initPath = window.location.pathname;
+  const detailMatch = initPath.match(/^\/inventory\/(\d+)$/);
+  if(detailMatch){
+    await showDetail(parseInt(detailMatch[1]));
+  } else {
+    const initPage = PATH_TO_PAGE[initPath] || 'dash';
+    go(initPage);
+  }
 }
 
 async function loadAll(){
@@ -42,16 +49,17 @@ async function loadAll(){
     A.activeFamilyId = A.families.find(f=>f.id===savedFam) ? savedFam : (A.families[0]?.id || null);
     updateSidebar();
     if(!A.activeFamilyId) return;
-    const [items,cats,tasks,svcs,members,receipts,ecoCats,ecoSum,ecoTrans] = await Promise.all([
+    const [items,cats,tasks,svcs,members,receipts,ecoCats,ecoSum,ecoTrans,catRules] = await Promise.all([
       api('GET','items'), api('GET','categories'), api('GET','tasks'),
       api('GET','services'), api('GET','family/members'), api('GET','receipts'),
       api('GET','economy/categories'),
       api('GET','economy/summary?month='+A.ecoMonth).catch(()=>null),
       api('GET','economy/transactions?month='+A.ecoMonth).catch(()=>[]),
+      api('GET','economy/cat-rules').catch(()=>[]),
     ]);
     A.items=items; A.cats=cats; A.tasks=tasks; A.svcs=svcs;
     A.members=members; A.receipts=receipts; A.ecoBudgetCats=ecoCats;
-    A.ecoSummary=ecoSum; A.ecoTrans=ecoTrans||[];
+    A.ecoSummary=ecoSum; A.ecoTrans=ecoTrans||[]; A.catRules=catRules||[];
     badges();
     // Load checklists and activity from DB (non-blocking)
     if(typeof loadChecklists === 'function') loadChecklists().catch(()=>{});
@@ -90,7 +98,7 @@ async function switchFamily(famId){
   localStorage.setItem('vault_active_family', famId);
   try { await api('POST','family/switch',{family_id:famId}); } catch{}
   await loadAll();
-  go('dash');
+  go(A.page||'dash');
   toast('✅ Bytte familj');
 }
 
@@ -101,13 +109,27 @@ const PAGE_TITLES = {
   admin:'Administration', detail:'Detaljer',
   settings:'Inställningar', checklists:'Listor'
 };
+
+const PAGE_PATHS = {
+  dash:'/', inv:'/inventory', cats:'/categories',
+  tasks:'/tasks', svc:'/service', warr:'/warranties',
+  receipts:'/receipts', eco:'/economy', family:'/family',
+  admin:'/admin', detail:'/detail',
+  settings:'/settings', checklists:'/checklists'
+};
+const PATH_TO_PAGE = Object.fromEntries(Object.entries(PAGE_PATHS).map(([p,u])=>[u,p]));
 const ADD_LABELS = {
   inv:'+ Ny sak', tasks:'+ Ny uppgift', svc:'+ Ny påminnelse',
   cats:'+ Ny kategori', receipts:'+ Nytt kvitto'
 };
 
-function go(page){
+function go(page, _fromPop=false, _itemId=null){
   if(NAV[NAV.length-1] !== page){ NAV.push(page); if(NAV.length>20) NAV.shift(); }
+  if(!_fromPop){
+    let path = PAGE_PATHS[page] || '/';
+    if(page === 'detail' && _itemId) path = '/inventory/' + _itemId;
+    history.pushState({page, itemId: _itemId}, '', path);
+  }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
   const pe = document.getElementById('p-'+page);
   if(pe) pe.classList.add('on');
@@ -150,6 +172,18 @@ function goBack(){
   if(NAV.length>1){ NAV.pop(); go(NAV.pop()); }
   else go('dash');
 }
+
+window.addEventListener('popstate', async e => {
+  const path = window.location.pathname;
+  // Handle /inventory/{id} detail deep links
+  const detailMatch = path.match(/^\/inventory\/(\d+)$/);
+  if(detailMatch){
+    await showDetail(parseInt(detailMatch[1]));
+    return;
+  }
+  const page = e.state?.page || PATH_TO_PAGE[path] || 'dash';
+  go(page, true);
+});
 
 function handleAdd(){
   const m = {inv:openItem, tasks:openTask, svc:openSvc, cats:openCat, receipts:openReceipt};

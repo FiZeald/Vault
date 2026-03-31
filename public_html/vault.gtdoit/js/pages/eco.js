@@ -4,6 +4,20 @@ const ECO_MONTHS_SHT = ['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','O
 function ecoMonthLabel(ym){ const[y,m]=ym.split('-'); return ECO_MONTHS_SV[parseInt(m)-1]+' '+y; }
 
 let _ecoTab = 'overview';
+let _ecoScope = 'shared';
+
+function setEcoScope(scope){
+  _ecoScope = scope;
+  document.getElementById('eco-scope-shared')?.classList.toggle('on', scope==='shared');
+  document.getElementById('eco-scope-personal')?.classList.toggle('on', scope==='personal');
+  renderEco();
+}
+
+function setTransScope(scope){
+  document.getElementById('tr-scope').value = scope;
+  document.getElementById('tscope-shared')?.classList.toggle('on', scope==='shared');
+  document.getElementById('tscope-personal')?.classList.toggle('on', scope==='personal');
+}
 
 // ───────────────────────────── MONTH NAV ────────────────────────────
 function ecoMonthStep(dir){
@@ -33,7 +47,7 @@ function fillEcoPersonFilter(){
 // ───────────────────────────── TAB SWITCH ───────────────────────────
 function switchEcoTab(tab){
   _ecoTab = tab;
-  ['overview','trans','budget','savings','subs'].forEach(t=>{
+  ['overview','trans','budget','savings','subs','imports'].forEach(t=>{
     document.getElementById('etab-'+t)?.classList.toggle('on', t===tab);
     const p = document.getElementById('epanel-'+t);
     if(p) p.style.display = (t===tab) ? '' : 'none';
@@ -42,6 +56,7 @@ function switchEcoTab(tab){
   if(tab==='budget')  renderBudget();
   if(tab==='savings') renderSavings();
   if(tab==='subs')    renderSubs();
+  if(tab==='imports') renderImports();
 }
 
 // ───────────────────────────── MAIN RENDER ──────────────────────────
@@ -60,7 +75,7 @@ async function renderEco(){
   });
 
   const pid = ecoPersonId();
-  const mp  = 'month='+A.ecoMonth+(pid?'&user_id='+pid:'');
+  const mp  = 'month='+A.ecoMonth+'&scope='+_ecoScope+(pid&&_ecoScope==='shared'?'&user_id='+pid:'');
 
   try {
     const [summary, trans] = await Promise.all([
@@ -441,7 +456,9 @@ function openBudgetCat(id=null){
   const c = id ? (A.ecoBudgetCats||[]).find(x=>x.id==id) : null;
   document.getElementById('bc-id').value     = id||'';
   document.getElementById('bc-name').value   = c?.name||'';
-  document.getElementById('bc-icon').value   = c?.icon||'💰';
+  const icon = c?.icon||'💰';
+  document.getElementById('bc-icon').value   = icon;
+  const bcBtn = document.getElementById('bc-icon-btn'); if(bcBtn) bcBtn.textContent = icon;
   document.getElementById('bc-type').value   = c?.type||'expense';
   document.getElementById('bc-budget').value = c?.budget||'';
   document.getElementById('bc-color').value  = c?.color||'#4F7FFF';
@@ -624,7 +641,9 @@ function openSavingsGoal(id=null){
   document.getElementById('sg-target').value  = g?.target||'';
   document.getElementById('sg-current').value = g?.current||'';
   document.getElementById('sg-date').value    = g?.date||'';
-  document.getElementById('sg-icon').value    = g?.icon||'🎯';
+  const sgIcon = g?.icon||'🎯';
+  document.getElementById('sg-icon').value    = sgIcon;
+  const sgBtn = document.getElementById('sg-icon-btn'); if(sgBtn) sgBtn.textContent = sgIcon;
   document.getElementById('sg-color').value   = g?.color||'#4F7FFF';
   document.getElementById('m-savings-title').textContent = id?'Redigera sparmål':'Nytt sparmål';
   document.getElementById('m-savings').classList.add('on');
@@ -775,7 +794,9 @@ function openSubModal(id=null){
   const s    = id ? data[id] : null;
   document.getElementById('sub-id').value       = id||'';
   document.getElementById('sub-name').value     = s?.name||'';
-  document.getElementById('sub-icon').value     = s?.icon||'';
+  const subIcon = s?.icon||'🔄';
+  document.getElementById('sub-icon').value     = subIcon;
+  const subBtn = document.getElementById('sub-icon-btn'); if(subBtn) subBtn.textContent = subIcon;
   document.getElementById('sub-amount').value   = s?.amount||'';
   document.getElementById('sub-interval').value = s?.interval||'monthly';
   document.getElementById('sub-next').value     = s?.next||'';
@@ -829,6 +850,7 @@ function openTransModal(prefillReceiptId=null){
   ['tr-desc','tr-amount','tr-note'].forEach(x=>{ const el=document.getElementById(x); if(el) el.value=''; });
   const dateEl = document.getElementById('tr-date'); if(dateEl) dateEl.value=new Date().toISOString().slice(0,10);
   const idEl   = document.getElementById('tr-id');   if(idEl)   idEl.value='';
+  setTransScope('shared');
   setTransType('expense');
   fillEcoCatSel();
   fillTransReceiptSel(prefillReceiptId);
@@ -854,6 +876,7 @@ function editTrans(id){
   document.getElementById('tr-date').value  = t.trans_date;
   document.getElementById('tr-note').value  = t.note||'';
   document.getElementById('tr-id').value    = id;
+  setTransScope(t.scope||'shared');
   setTransType(t.type);
   fillEcoCatSel(t.category_id);
   fillTransReceiptSel(t.receipt_id);
@@ -873,9 +896,15 @@ function setTransType(type){
 
 function fillEcoCatSel(selId){
   const el = document.getElementById('tr-cat'); if(!el) return;
-  el.innerHTML = '<option value="">Ingen kategori</option>'+
-    (A.ecoBudgetCats||[]).filter(c=>c.type===A_ecoTransType)
-    .map(c=>`<option value="${c.id}" ${c.id==selId?'selected':''}>${c.icon} ${esc(c.name)}</option>`).join('');
+  const cats = (A.ecoBudgetCats||[]).filter(c=>c.type===A_ecoTransType);
+  if(!cats.length){
+    el.innerHTML = `<option value="">– Skapa kategorier i Budget-fliken –</option>`;
+    el.disabled = true;
+  } else {
+    el.disabled = false;
+    el.innerHTML = '<option value="">Ingen kategori</option>'+
+      cats.map(c=>`<option value="${c.id}" ${c.id==selId?'selected':''}>${c.icon} ${esc(c.name)}</option>`).join('');
+  }
 }
 
 async function saveTrans(){
@@ -890,18 +919,23 @@ async function saveTrans(){
     category_id : parseInt(document.getElementById('tr-cat').value)||null,
     receipt_id  : parseInt(document.getElementById('tr-receipt').value)||null,
     item_id     : parseInt(document.getElementById('tr-item').value)||null,
-    note        : document.getElementById('tr-note').value
+    note        : document.getElementById('tr-note').value,
+    scope       : document.getElementById('tr-scope')?.value || 'shared'
   };
   try {
     const eid = document.getElementById('tr-id').value;
     if(eid){
       const u = await api('PUT','economy/transactions/'+eid, body);
       A.ecoTrans = (A.ecoTrans||[]).map(t=>t.id==eid?u:t);
+      // Update cat rule if category was assigned
+      if(body.category_id) _saveCatRule(body.description, body.category_id);
       toast('✅ Uppdaterad!');
     } else {
       const c = await api('POST','economy/transactions', body);
       if(!A.ecoTrans) A.ecoTrans=[];
       A.ecoTrans.unshift(c);
+      // Learn categorization rule if category was picked
+      if(body.category_id) _saveCatRule(body.description, body.category_id);
       toast('✅ Sparad!');
     }
     closeModal('m-trans');
@@ -955,13 +989,84 @@ async function doImport(){
       d.duplicates>0?`⏭ ${d.duplicates} dubbletter hoppades över`:'',
       d.skipped>0?`⚠️ ${d.skipped} rader kunde inte tolkas`:''
     ].filter(Boolean).join('<br>');
+    const importLink = d.import_id ? `<div style="margin-top:10px"><button class="btn btn-s btn-sm" onclick="closeModal('m-import');switchEcoTab('imports')">📋 Visa import #${d.import_id}</button></div>` : '';
     document.getElementById('import-result').style.display='';
     document.getElementById('import-result').innerHTML=`<div class="card" style="background:var(--green-bg);border-color:var(--green)">
       <strong style="color:var(--green)">Import klar!</strong>
       <div style="font-size:13px;margin-top:8px;line-height:1.8">${rows}</div>
+      ${importLink}
     </div>`;
     btn.style.display='none';
     if(d.imported>0){ await renderEco(); toast(`✅ ${d.imported} transaktioner importerade!`); }
   } catch(e){ toast(e.message,'err'); }
   finally { btn.textContent='Importera'; btn.disabled=false; }
+}
+
+// ─────────────────────────── IMPORTS TAB ────────────────────────────
+async function renderImports(){
+  const el = document.getElementById('eco-imports-list'); if(!el) return;
+  el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--ink3);font-size:13px">⏳ Laddar…</div>';
+  try {
+    const imports = await api('GET','economy/imports');
+    if(!imports||!imports.length){
+      el.innerHTML=`<div class="empty"><div class="empty-icon">📥</div><h3>Inga importer</h3><p>Importerade CSV-filer visas här</p></div>`;
+      return;
+    }
+    el.innerHTML = imports.map(imp=>`
+      <div class="svc-row" style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:22px;flex-shrink:0">📄</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:14px">${esc(imp.filename)}</div>
+          <div style="font-size:12px;color:var(--ink3);margin-top:2px">
+            ${fmtDate(imp.created_at?.slice(0,10))} ·
+            <span style="color:var(--green)">✅ ${imp.imported_count} importerade</span>
+            ${imp.dupe_count>0 ? ` · <span style="color:var(--ink3)">⏭ ${imp.dupe_count} dubbletter</span>` : ''}
+            ${imp.skipped_count>0 ? ` · <span style="color:var(--amber)">⚠️ ${imp.skipped_count} hoppades</span>` : ''}
+          </div>
+        </div>
+        <button class="btn btn-d btn-sm" onclick="deleteImport(${imp.id},'${esc(imp.filename)}')">🗑️ Ångra</button>
+      </div>`).join('');
+  } catch(e){ el.innerHTML=`<div style="padding:20px;color:var(--rose);font-size:13px">Fel: ${esc(e.message)}</div>`; }
+}
+
+async function deleteImport(id, filename){
+  if(!confirm(`Ta bort importen "${filename}" och alla dess transaktioner?\n\nDetta kan inte ångras.`)) return;
+  try {
+    const r = await api('DELETE','economy/imports/'+id);
+    toast(`🗑️ Import borttagen · ${r.transactions_deleted} transaktioner raderade`);
+    renderImports();
+    renderEco();
+  } catch(e){ toast(e.message,'err'); }
+}
+
+// ─────────────────────────── CAT RULES ──────────────────────────────
+async function renderCatRules(){
+  const el = document.getElementById('eco-cat-rules-list'); if(!el) return;
+  try {
+    const rules = await api('GET','economy/cat-rules');
+    if(!rules||!rules.length){
+      el.innerHTML=`<div style="padding:12px 0;color:var(--ink3);font-size:13px">Inga regler sparade. Tilldela en kategori till en transaktion för att lära systemet.</div>`;
+      return;
+    }
+    el.innerHTML = rules.map(r=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="font-family:var(--mono);font-size:12px;background:var(--surface2);padding:2px 8px;border-radius:4px;flex:1">${esc(r.keyword)}</span>
+        <span style="font-size:12px;color:var(--ink2)">${r.cat_icon||''} ${esc(r.cat_name||'')}</span>
+        <button class="btn btn-g btn-xs" onclick="deleteCatRule(${r.id})">✕</button>
+      </div>`).join('');
+  } catch(e){}
+}
+
+async function deleteCatRule(id){
+  try {
+    await api('DELETE','economy/cat-rules/'+id);
+    toast('🗑️ Regel borttagen');
+    renderCatRules();
+  } catch(e){ toast(e.message,'err'); }
+}
+
+async function _saveCatRule(desc, catId){
+  if(!desc||!catId) return;
+  const keyword = desc.toLowerCase().trim().slice(0,30);
+  try { await api('POST','economy/cat-rules',{keyword, category_id:catId}); } catch{}
 }

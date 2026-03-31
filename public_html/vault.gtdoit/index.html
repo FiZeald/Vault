@@ -2,6 +2,7 @@
 <html lang="sv" data-theme="dark">
 <head>
 <meta charset="UTF-8">
+<base href="/">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -18,8 +19,8 @@
 /* ── DESIGN TOKENS ─────────────────────────────────────────────── */
 :root{
   --bg:#080B12;--surface:#0F1420;--surface2:#141B2D;--surface3:#1A2238;
-  --border:#1C2640;--border2:#263052;
-  --ink:#E4EAFB;--ink2:#8993B5;--ink3:#404E70;
+  --border:#1E2840;--border2:#2A3560;
+  --ink:#EDF0FA;--ink2:#A0ABCA;--ink3:#6B7598;
   --accent:#4D7CFF;--accent2:#7BA0FF;--accent-bg:rgba(77,124,255,.13);
   --green:#0FD07A;--green-bg:rgba(15,208,122,.12);
   --amber:#F5A623;--amber-bg:rgba(245,166,35,.12);
@@ -35,7 +36,7 @@
 [data-theme="light"]{
   --bg:#EEF1F8;--surface:#FFFFFF;--surface2:#F4F6FD;--surface3:#E8EDF8;
   --border:#D5DCF0;--border2:#B8C3E0;
-  --ink:#141928;--ink2:#404E70;--ink3:#8993B5;
+  --ink:#141928;--ink2:#404E70;--ink3:#6E7A9A;
   --shadow:0 8px 32px rgba(0,0,0,.09);--shadow2:0 2px 8px rgba(0,0,0,.06);
 }
 
@@ -52,7 +53,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14p
 .sidebar{width:var(--sb-w);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:transform .25s ease}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 .topbar{padding:0 18px;height:var(--topbar-h);flex-shrink:0;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);background:var(--surface)}
-.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:24px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:24px 32px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.page{max-width:1400px;margin:0 auto}
 @supports(padding-bottom:env(safe-area-inset-bottom)){.content{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}}
 
 /* ── SIDEBAR ─────────────────────────────────────────────────────── */
@@ -134,8 +136,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14p
 /* ── CARDS / LAYOUT ──────────────────────────────────────────────── */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px}
 .sec-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
-.sec-hd h2{font-size:20px;font-weight:700;letter-spacing:-.4px}
-.sec-hd p{font-size:13px;color:var(--ink3);margin-top:2px}
+.sec-hd h2{font-size:20px;font-weight:700;letter-spacing:-.4px;color:var(--ink)}
+.sec-hd p{font-size:13px;color:var(--ink2);margin-top:2px}
 .empty{text-align:center;padding:52px 24px;color:var(--ink3)}
 .empty-icon{font-size:44px;margin-bottom:14px;opacity:.5}
 .empty h3{font-size:16px;font-weight:600;color:var(--ink2);margin-bottom:6px}
@@ -179,8 +181,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14p
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
 .dash-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
 .dash-card-hd{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.dash-card-hd h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink2)}
-.dash-card-body{padding:4px 0}
+.dash-card-hd h3{font-size:12px;font-weight:600;color:var(--ink)}
+.dash-card-body{padding:0}
 /* Tasks inside dash */
 .dash-task-add{border-bottom:1px solid var(--border)}
 .dash-task-add .fi{border:none;background:transparent;font-size:13px;padding:10px 16px;width:100%;outline:none;color:var(--ink1)}
@@ -378,11 +380,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14p
 
 /* ── TASKS ───────────────────────────────────────────────────────── */
 .tasks-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.full-task-row{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)}
+.full-task-row{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);border-left:3px solid transparent;transition:background var(--transition)}
 .full-task-row:last-child{border-bottom:none}
-.full-task-row.done .task-txt{opacity:.5;text-decoration:line-through}
+.full-task-row:hover{background:var(--surface2)}
+.full-task-row.done{opacity:.55}
+.full-task-row.done .task-txt{text-decoration:line-through}
+.full-task-row.pri-u{border-left-color:var(--rose);background:rgba(240,79,108,.04)}
+.full-task-row.pri-h{border-left-color:var(--amber);background:rgba(245,166,35,.04)}
+.full-task-row.pri-m{border-left-color:var(--accent)}
+.full-task-row.pri-l{border-left-color:var(--green)}
+.full-task-row.overdue-row{background:rgba(240,79,108,.06)}
 .task-meta{font-size:11px;color:var(--ink3);display:flex;gap:10px;flex-wrap:wrap;margin-top:3px}
 .task-acts{display:flex;gap:4px;margin-left:auto;flex-shrink:0}
+.tasks-col-hd{font-size:12px;font-weight:600;color:var(--ink);padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;justify-content:space-between;align-items:center}
+.tasks-col-hd span{font-size:11px;color:var(--ink3);font-weight:400}
+.t-mine-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;margin-bottom:18px}
+.t-mine-hd{padding:10px 16px;background:linear-gradient(90deg,var(--accent-bg),transparent);border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--accent2)}
 
 /* ── SERVICE ─────────────────────────────────────────────────────── */
 /* Legacy svc-row (kept for svc page) */
@@ -480,6 +493,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14p
 .eco-qa-btn.qa-income .eco-qa-icon{background:var(--green-bg);color:var(--green)}
 .eco-qa-btn.qa-import .eco-qa-icon{background:var(--accent-bg);color:var(--accent2)}
 .eco-qa-btn.qa-budget .eco-qa-icon{background:var(--amber-bg);color:var(--amber)}
+/* Scope toggle buttons (personal / family) */
+.eco-scope-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);border-radius:20px;padding:5px 12px;font-size:12px;font-family:var(--font);cursor:pointer;transition:all .15s;font-weight:500}
+.eco-scope-btn:hover{background:rgba(255,255,255,.18)}
+.eco-scope-btn.on{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.4);color:#fff;font-weight:600}
+/* Trans scope row */
+.trans-scope-row{display:flex;gap:6px;margin-bottom:14px}
+.trans-scope-btn{flex:1;padding:8px 12px;border-radius:var(--r2);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);font-family:var(--font);transition:all .15s;background:var(--surface2);color:var(--ink3)}
+.trans-scope-btn.on.shared{background:var(--accent-bg);border-color:var(--accent);color:var(--accent2)}
+.trans-scope-btn.on.personal{background:var(--purple-bg);border-color:var(--purple);color:var(--purple)}
+
 /* Controls row */
 .eco-controls{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
 /* Person strip */
@@ -582,7 +605,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14p
 
 /* ── FAMILY ──────────────────────────────────────────────────────── */
 /* ── FAMILY PAGE ─────────────────────────────────────────────── */
-.fam-page{display:flex;flex-direction:column;gap:16px;max-width:900px}
+.fam-page{display:flex;flex-direction:column;gap:16px}
 
 /* Hero invite card */
 .fam-invite-hero{background:linear-gradient(135deg,rgba(77,124,255,.14) 0%,rgba(155,111,255,.1) 60%,rgba(6,205,205,.06) 100%);border:1px solid var(--border2);border-radius:var(--r3);padding:24px 28px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;position:relative;overflow:hidden}
@@ -603,7 +626,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14p
 /* Section card */
 .fam-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
 .fam-section-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border);background:var(--surface2)}
-.fam-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink2)}
+.fam-section-title{font-size:12px;font-weight:600;color:var(--ink)}
 
 /* Member rows */
 .member-row{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border);transition:background var(--transition)}
@@ -643,7 +666,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14p
 
 /* ── SETTINGS PAGE ───────────────────────────────────────────────── */
 .set-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:16px;overflow:hidden}
-.set-section-hd{padding:14px 18px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3)}
+.set-section-hd{padding:14px 18px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--ink)}
 .set-row{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);gap:16px}
 .set-row:last-child{border-bottom:none}
 .set-row-left{flex:1;min-width:0}
@@ -694,6 +717,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14p
 .emoji-sel:hover{border-color:var(--accent)}
 .emoji-picker-wrap{position:relative;flex:1}
 #emoji-picker,#emoji-picker2{display:none;position:absolute;top:100%;left:0;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:8px;max-height:180px;overflow-y:auto;width:260px;margin-top:4px}
+#ep-global #ep-tabs::-webkit-scrollbar{display:none}
+#ep-global .ep-tab:hover{opacity:1!important;background:var(--surface2)}
 .emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px}
 .ebtn{background:none;border:none;font-size:18px;cursor:pointer;padding:4px;border-radius:5px;transition:background var(--transition)}
 .ebtn:hover,.ebtn.on{background:var(--accent-bg)}
@@ -810,14 +835,60 @@ body.compact .stat-val{font-size:22px}
   .fam-invite-right{min-width:0;width:100%}
 }
 @media(max-width:600px){
-  .content{padding:16px;padding-bottom:calc(var(--mob-nav-h) + 16px + env(safe-area-inset-bottom,0px))}
+  .content{padding:16px 14px;padding-bottom:calc(var(--mob-nav-h) + 16px + env(safe-area-inset-bottom,0px))}
   .dash-stats{grid-template-columns:1fr 1fr}
   .eco-header{grid-template-columns:1fr}
   #search-panel{width:calc(100vw - 32px);right:16px}
   .modal{padding:20px;border-radius:var(--r)}
   .auth-box{padding:24px;border-radius:var(--r3)}
+  .svc-card-acts{flex-wrap:wrap;gap:3px}
+  .svc-card-acts .btn{font-size:11px;padding:4px 8px}
+  .inv-list-date{display:none}
+  .filter-row{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+  .filter-chips{flex-wrap:nowrap}
+  .qr-size-btns{grid-template-columns:repeat(2,1fr)}
+  .set-info-row{flex-direction:column;align-items:flex-start;gap:10px}
+  .fam-invite-email-wrap{flex-direction:column}
+  .fam-invite-email-wrap input,.fam-invite-email-wrap .btn{width:100%}
+  .tag-input-wrap{width:100%}
+  .eco-tabs{-webkit-overflow-scrolling:touch}
+}
+@media(max-width:480px){
+  .dash-qa{grid-template-columns:repeat(3,1fr);gap:6px}
+  .dash-qa-btn{padding:9px 4px;font-size:10px}
+  .items-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+  .icard-img{height:110px;font-size:36px}
+  .search-wrap{display:none}
+  .topbar{gap:8px}
+  .eco-qa{grid-template-columns:repeat(2,1fr)}
+  .fam-grid{grid-template-columns:1fr}
+  .auth-box{padding:20px}
+  .inv-list-badges{display:none}
+  .dash-stat-chip{padding:10px 12px}
+  .dsc-val{font-size:20px}
+}
+@media(max-width:360px){
+  .dash-stats{grid-template-columns:1fr 1fr;gap:8px}
+  .mob-tab span:not(.mt-icon):not(.mt-dot){display:none}
+  .mob-tab{font-size:0}
+  .mob-tab .mt-icon{font-size:22px}
+  .content{padding:12px;padding-bottom:calc(var(--mob-nav-h) + 12px + env(safe-area-inset-bottom,0px))}
 }
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ── LARGE SCREEN (≥1280px) ─────────────────────────────────────── */
+@media(min-width:1280px){
+  .dash-grid{grid-template-columns:repeat(3,1fr)}
+  .dash-stats{grid-template-columns:repeat(4,1fr)}
+  .tasks-layout{grid-template-columns:repeat(2,1fr)}
+  .fam-grid{grid-template-columns:repeat(3,1fr)}
+  .eco-overview-grid{grid-template-columns:repeat(3,1fr)}
+  .items-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+  .settings-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+}
+@media(min-width:1600px){
+  .dash-stats{grid-template-columns:repeat(6,1fr)}
+}
 
 /* ── v3.2 — Status, Loans, Documents, Activity ──────────────────── */
 /* Status filter row */
@@ -882,6 +953,24 @@ body.compact .stat-val{font-size:22px}
 .qr-size-btn small{font-size:10px;color:var(--ink3);text-align:center}
 .qr-size-icon{font-size:9px;line-height:1.6;letter-spacing:2px;color:var(--accent2);opacity:.8;text-align:center}
 
+/* ── INVENTORY HISTORY TIMELINE ─────────────────────────────── */
+.inv-history-wrap{padding:0}
+.inv-tl-period{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);padding:12px 16px 8px;background:var(--surface2);border-bottom:1px solid var(--border);position:sticky;top:0}
+.inv-tl-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background var(--transition);cursor:pointer}
+.inv-tl-item:last-child{border-bottom:none}
+.inv-tl-item:hover{background:var(--surface2)}
+.inv-tl-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.inv-tl-icon.type-svc{background:var(--accent-bg)}
+.inv-tl-icon.type-rec{background:var(--green-bg)}
+.inv-tl-icon.type-buy{background:var(--purple-bg)}
+.inv-tl-body{flex:1;min-width:0}
+.inv-tl-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inv-tl-sub{font-size:11px;color:var(--ink3);margin-top:2px}
+.inv-tl-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.inv-tl-amount{font-family:var(--mono);font-size:13px;font-weight:700}
+.inv-tl-date{font-size:10px;color:var(--ink3)}
+.inv-history-empty{text-align:center;padding:28px 16px;font-size:13px;color:var(--ink3)}
+
 /* ── AVATAR UPLOAD (settings) ────────────────────────────────── */
 .set-av-photo{position:relative;display:inline-block}
 .set-av-del{position:absolute;top:-4px;right:-4px;width:20px;height:20px;border-radius:50%;background:var(--rose);color:#fff;border:none;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all .15s}
@@ -911,8 +1000,8 @@ body.compact .stat-val{font-size:22px}
 .card{transition:box-shadow .2s,border-color .2s}
 .card:hover{box-shadow:0 4px 20px rgba(0,0,0,.25);border-color:var(--border2)}
 
-/* Topbar subtle glass */
-.topbar{background:rgba(15,20,32,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+/* Topbar */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border)}
 
 /* Dashboard header larger glow */
 .dash-header::after{width:220px;height:220px;top:-60px;right:-60px;background:radial-gradient(circle,rgba(77,124,255,.1) 0%,rgba(155,111,255,.05) 50%,transparent 70%)}
@@ -930,6 +1019,33 @@ body.compact .stat-val{font-size:22px}
 
 /* Modals refined */
 .modal{border-top:2px solid transparent;border-image:linear-gradient(90deg,var(--accent),var(--purple)) 1;border-image-width:2px 0 0 0}
+
+/* ── LIST CARD VARIANT (no padding, rows handle their own) ── */
+.card-list{padding:0!important;overflow:hidden}
+
+/* ── CAT EDIT BUTTON ─────────────────────────────────── */
+.cat-edit{position:absolute;top:6px;left:6px;opacity:0;background:var(--accent-bg);border:none;color:var(--accent2);border-radius:5px;width:22px;height:22px;cursor:pointer;font-size:11px;transition:opacity var(--transition);z-index:1;display:flex;align-items:center;justify-content:center}
+.cat-card:hover .cat-edit{opacity:1}
+
+/* ── ROW PADDING OVERRIDES ──────────────────────────── */
+.svc-row{padding:14px 20px}
+.svc-row:hover{background:var(--surface2)}
+.svc-hist-row{padding:12px 20px}
+.warr-row{padding:12px 20px}
+.warr-row:hover{background:var(--surface2);padding-left:20px;padding-right:20px}
+.rec-row{padding:12px 20px;margin:0;border-radius:0}
+.rec-row:hover{background:var(--surface2);margin:0;padding:12px 20px;border-radius:0}
+.detail-row{padding:10px 0}
+.full-task-row{padding:13px 16px}
+.set-row{padding:15px 20px}
+.set-info-row{padding:16px 20px}
+.set-section-hd{padding:14px 20px}
+
+/* ── SECTION SPACING ─────────────────────────────────── */
+.sec-hd{margin-bottom:24px}
+.card{padding:22px}
+.page-tabs{margin-bottom:22px}
+.filter-row{margin-bottom:16px}
 </style>
 </head>
 <body>
@@ -943,8 +1059,8 @@ body.compact .stat-val{font-size:22px}
       <p>Familjens hemöversikt</p>
     </div>
     <div class="auth-tabs" role="tablist">
-      <button class="auth-tab on" id="t-login" role="tab" aria-selected="true" onclick="switchTab('login')">Logga in</button>
-      <button class="auth-tab" id="t-reg" role="tab" aria-selected="false" onclick="switchTab('reg')">Skapa konto</button>
+      <button class="auth-tab on" id="t-login" role="tab" aria-selected="true" onclick="switchTab('login')" data-i18n="auth.login">Logga in</button>
+      <button class="auth-tab" id="t-reg" role="tab" aria-selected="false" onclick="switchTab('reg')" data-i18n="auth.register">Skapa konto</button>
     </div>
     <div id="auth-msg" class="auth-msg" role="alert" aria-live="polite"></div>
     <div class="auth-form on" id="f-login" role="tabpanel">
@@ -954,11 +1070,11 @@ body.compact .stat-val{font-size:22px}
         <label class="auth-remember-lbl">
           <input type="checkbox" id="l-remember" checked>
           <span class="auth-remember-box"></span>
-          <span>Kom ihåg mig</span>
+          <span data-i18n="auth.remember">Kom ihåg mig</span>
         </label>
-        <div class="auth-link" onclick="switchTab('forgot')" tabindex="0" role="button">Glömt lösenordet?</div>
+        <div class="auth-link" onclick="switchTab('forgot')" tabindex="0" role="button" data-i18n="auth.forgot">Glömt lösenordet?</div>
       </div>
-      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="doLogin()">Logga in →</button>
+      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="doLogin()" data-i18n="auth.login_btn">Logga in →</button>
     </div>
     <div class="auth-form" id="f-reg" role="tabpanel">
       <input class="fi" id="r-name" type="text" placeholder="Namn" autocomplete="name">
@@ -968,13 +1084,13 @@ body.compact .stat-val{font-size:22px}
         <input class="fi" id="r-code" type="text" placeholder="T.ex. A3F9K2 (valfritt)" maxlength="6" style="text-transform:uppercase;font-family:var(--mono);letter-spacing:4px;flex:1" autocomplete="off">
         <span class="auth-invite-hint">Har du en kod? Fyll i den för att gå med i en familj direkt.</span>
       </div>
-      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="doRegister()">Skapa konto →</button>
+      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="doRegister()" data-i18n="auth.register_btn">Skapa konto →</button>
     </div>
     <div class="auth-form" id="f-forgot" role="tabpanel">
-      <p style="font-size:13px;color:var(--ink3)">Ange din e-post så skickar vi en återställningslänk.</p>
+      <p style="font-size:13px;color:var(--ink3)" data-i18n="auth.reset.hint">Ange din e-post så skickar vi en återställningslänk.</p>
       <input class="fi" id="fg-email" type="email" placeholder="E-postadress" autocomplete="email">
-      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="doForgot()">Skicka länk →</button>
-      <div class="auth-link" onclick="switchTab('login')" tabindex="0" role="button">← Tillbaka till inloggning</div>
+      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="doForgot()" data-i18n="auth.reset.send">Skicka länk →</button>
+      <div class="auth-link" onclick="switchTab('login')" tabindex="0" role="button" data-i18n="auth.back_login">← Tillbaka till inloggning</div>
     </div>
   </div>
 </div>
@@ -1059,72 +1175,59 @@ body.compact .stat-val{font-size:22px}
           <button class="btn btn-g btn-sm btn-icon" onclick="loadAll().then(()=>render('dash'))" title="Uppdatera data">↻</button>
         </div>
 
-        <!-- Quick actions -->
-        <div class="dash-qa">
-          <button class="dash-qa-btn" onclick="openItem()"><div class="dash-qa-ic">📦</div>Ny sak</button>
-          <button class="dash-qa-btn" onclick="openTask()"><div class="dash-qa-ic">✅</div>Uppgift</button>
-          <button class="dash-qa-btn" onclick="go('eco');setTimeout(()=>openTransModal(),120)"><div class="dash-qa-ic">💰</div>Transaktion</button>
-          <button class="dash-qa-btn" onclick="openReceipt()"><div class="dash-qa-ic">🧾</div>Kvitto</button>
-          <button class="dash-qa-btn" onclick="openSvc()"><div class="dash-qa-ic">🔧</div>Service</button>
-        </div>
-
-        <!-- Stats strip -->
-        <div class="dash-stats" id="stats"></div>
-
-        <!-- Spotlight: single most important item -->
-        <div id="d-spotlight"></div>
-
-        <!-- Alert banner (service/warranty) -->
-        <div id="next-up-wrap"></div>
-        <div id="d-alerts"></div>
-
         <!-- Main grid -->
         <div class="dash-grid">
           <!-- Tasks -->
-          <div class="dash-card">
+          <div class="dash-card" id="d-tasks-wrap">
             <div class="dash-card-hd" id="d-tasks-hd">
-              <h3>📋 Uppgifter</h3>
+              <h3 data-i18n="dash.widget.tasks">📋 Uppgifter</h3>
               <div style="display:flex;gap:6px">
-                <button class="btn btn-p btn-xs" onclick="openTask()" title="Ny uppgift">+</button>
+                <button class="btn btn-p btn-xs" onclick="openTask()">+ Lägg till</button>
                 <button class="btn btn-g btn-xs" onclick="go('tasks')">Se alla →</button>
               </div>
             </div>
             <div id="d-tasks"></div>
           </div>
           <!-- Economy -->
-          <div class="dash-card">
+          <div class="dash-card" id="d-eco-wrap">
             <div class="dash-card-hd" id="d-eco-hd">
               <h3>💰 Ekonomi</h3>
             </div>
             <div id="d-eco"></div>
           </div>
           <!-- Service -->
-          <div class="dash-card">
+          <div class="dash-card" id="d-svc-wrap">
             <div class="dash-card-hd">
-              <h3>🔧 Kommande service</h3>
-              <button class="btn btn-g btn-xs" onclick="go('svc')">Se alla →</button>
+              <h3 data-i18n="dash.widget.service">🔧 Kommande service</h3>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-p btn-xs" onclick="openSvc()">+ Lägg till</button>
+                <button class="btn btn-g btn-xs" onclick="go('svc')">Se alla →</button>
+              </div>
             </div>
             <div class="dash-card-body" id="d-svc"></div>
           </div>
           <!-- Recent items -->
           <div class="dash-card" id="d-items-wrap">
             <div class="dash-card-hd">
-              <h3>📦 Senaste saker</h3>
-              <button class="btn btn-g btn-xs" onclick="go('inv')">Se alla →</button>
+              <h3 data-i18n="dash.widget.items">📦 Senaste saker</h3>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-p btn-xs" onclick="openItem()">+ Lägg till</button>
+                <button class="btn btn-g btn-xs" onclick="go('inv')">Se alla →</button>
+              </div>
             </div>
             <div class="dash-card-body" id="d-items"></div>
           </div>
           <!-- Activity feed -->
           <div class="dash-card" id="d-activity-wrap">
             <div class="dash-card-hd">
-              <h3>📜 Aktivitet</h3>
+              <h3 data-i18n="dash.widget.activity">📜 Aktivitet</h3>
               <button class="btn btn-g btn-xs" onclick="loadActivity().then(renderDashActivity)">↻</button>
             </div>
             <div class="dash-card-body" id="d-activity"></div>
           </div>
           <!-- Inventory value chart -->
           <div class="dash-card" id="d-value-wrap">
-            <div class="dash-card-hd"><h3>📈 Inventarievärde</h3></div>
+            <div class="dash-card-hd"><h3 data-i18n="dash.widget.value">📈 Inventarievärde</h3></div>
             <div class="dash-card-body value-chart-wrap" id="d-sparkline"></div>
           </div>
         </div>
@@ -1134,7 +1237,7 @@ body.compact .stat-val{font-size:22px}
       <!-- INVENTORY -->
       <div class="page" id="p-inv">
         <div class="sec-hd">
-          <div><h2>Inventarie</h2><p id="inv-cnt">0 saker</p></div>
+          <div><h2 data-i18n="nav.inv">Inventarie</h2><p id="inv-cnt">0 saker</p></div>
           <button class="btn btn-p" onclick="openItem()">+ Ny sak</button>
         </div>
         <div class="filter-row">
@@ -1148,11 +1251,11 @@ body.compact .stat-val{font-size:22px}
             <button class="inv-view-btn"    id="inv-view-list" onclick="setInvView('list')" title="Lista">≡</button>
           </div>
           <select class="sort-sel" id="inv-sort" onchange="renderInv()">
-            <option value="newest">Nyast</option>
-            <option value="oldest">Äldst</option>
-            <option value="name">Namn A–Ö</option>
-            <option value="price-high">Pris ↓</option>
-            <option value="price-low">Pris ↑</option>
+            <option value="newest" data-i18n="inv.sort.newest">Nyast</option>
+            <option value="oldest" data-i18n="inv.sort.oldest">Äldst</option>
+            <option value="name" data-i18n="inv.sort.name">Namn A–Ö</option>
+            <option value="price-high" data-i18n="inv.sort.priceh">Pris ↓</option>
+            <option value="price-low" data-i18n="inv.sort.pricel">Pris ↑</option>
           </select>
           <label class="inv-csv-label" title="Importera saker från CSV-fil">📥 CSV<input type="file" accept=".csv" style="display:none" onchange="importCSV(this)"></label>
           <button class="inv-csv-label" onclick="openPrintQueue()" title="Skriv ut QR-koder på A4" id="qr-print-btn">🖨️ QR-utskrift<span id="qr-print-count" style="display:none;margin-left:5px;background:var(--accent);color:#fff;border-radius:10px;padding:0 6px;font-size:10px;font-weight:700"></span></button>
@@ -1167,8 +1270,8 @@ body.compact .stat-val{font-size:22px}
       <!-- CATEGORIES -->
       <div class="page" id="p-cats">
         <div class="sec-hd">
-          <div><h2>Kategorier</h2><p>Organisera era saker</p></div>
-          <button class="btn btn-p" onclick="openCat()">+ Ny kategori</button>
+          <div><h2 data-i18n="nav.cats">Kategorier</h2><p data-i18n="cats.sub">Organisera era saker</p></div>
+          <button class="btn btn-p" onclick="openCat()" data-i18n="add.cats">+ Ny kategori</button>
         </div>
         <div class="cats-grid" id="cg"></div>
       </div>
@@ -1176,16 +1279,39 @@ body.compact .stat-val{font-size:22px}
       <!-- TASKS -->
       <div class="page" id="p-tasks">
         <div class="sec-hd">
-          <div><h2>Uppgifter</h2><p id="tasks-cnt">0 aktiva</p></div>
-          <button class="btn btn-p" onclick="openTask()">+ Ny uppgift</button>
+          <div><h2 data-i18n="nav.tasks">Uppgifter</h2><p id="tasks-cnt">0 aktiva</p></div>
+          <button class="btn btn-p" onclick="openTask()" data-i18n="add.tasks">+ Ny uppgift</button>
+        </div>
+        <!-- Filter bar -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+          <select class="sort-sel" id="task-filter-pri" onchange="renderTasks()">
+            <option value="" data-i18n="filter.all_priority">Alla prioriteter</option>
+            <option value="urgent" data-i18n="tasks.filter.urgent">🔴 Brådskande</option>
+            <option value="high" data-i18n="tasks.filter.high">🟡 Hög</option>
+            <option value="medium" data-i18n="tasks.filter.medium">🔵 Medium</option>
+            <option value="low" data-i18n="tasks.filter.low">🟢 Låg</option>
+          </select>
+          <select class="sort-sel" id="task-filter-person" onchange="renderTasks()">
+            <option value="" data-i18n="filter.all_persons">Alla personer</option>
+          </select>
+          <select class="sort-sel" id="task-sort" onchange="renderTasks()">
+            <option value="priority" data-i18n="sort.priority">Sortera: Prioritet</option>
+            <option value="due" data-i18n="sort.due">Sortera: Förfallodatum</option>
+            <option value="newest" data-i18n="sort.newest">Sortera: Nyast</option>
+          </select>
+        </div>
+        <!-- My tasks -->
+        <div class="t-mine-card" id="t-mine-wrap" style="display:none">
+          <div class="t-mine-hd">👤 <span data-i18n="tasks.mine">Tilldelad mig</span> <span id="t-mine-cnt"></span></div>
+          <div id="t-mine"></div>
         </div>
         <div class="tasks-layout">
-          <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:8px">Aktiva</div>
+          <div class="dash-card">
+            <div class="tasks-col-hd"><span data-i18n="tasks.col.active">Aktiva</span> <span id="t-active-cnt"></span></div>
             <div id="t-active"></div>
           </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:8px">Avklarade</div>
+          <div class="dash-card">
+            <div class="tasks-col-hd"><span data-i18n="tasks.col.done">Avklarade</span> <span id="t-done-cnt"></span></div>
             <div id="t-done"></div>
           </div>
         </div>
@@ -1194,30 +1320,30 @@ body.compact .stat-val{font-size:22px}
       <!-- SERVICE -->
       <div class="page" id="p-svc">
         <div class="sec-hd">
-          <div><h2>Service & underhåll</h2><p>Planerat och historik</p></div>
-          <button class="btn btn-p" onclick="openSvc()">+ Ny påminnelse</button>
+          <div><h2 data-i18n="nav.svc">Service & underhåll</h2><p data-i18n="svc.sub">Planerat och historik</p></div>
+          <button class="btn btn-p" onclick="openSvc()" data-i18n="add.svc">+ Ny påminnelse</button>
         </div>
         <div class="page-tabs">
-          <button class="page-tab on" id="svc-tab-upcoming" onclick="switchSvcTab('upcoming')">Kommande</button>
-          <button class="page-tab" id="svc-tab-history" onclick="switchSvcTab('history')">Historik</button>
+          <button class="page-tab on" id="svc-tab-upcoming" onclick="switchSvcTab('upcoming')" data-i18n="svc.tab.upcoming">Kommande</button>
+          <button class="page-tab" id="svc-tab-history" onclick="switchSvcTab('history')" data-i18n="svc.tab.history">Historik</button>
         </div>
-        <div class="card" id="svc-panel-upcoming"><div id="svc-list"></div></div>
-        <div class="card" id="svc-panel-history" style="display:none"><div id="svc-history-list"></div></div>
+        <div class="card card-list" id="svc-panel-upcoming"><div id="svc-list"></div></div>
+        <div class="card card-list" id="svc-panel-history" style="display:none"><div id="svc-history-list"></div></div>
       </div>
 
       <!-- WARRANTIES -->
       <div class="page" id="p-warr">
-        <div class="sec-hd"><div><h2>Garantier</h2><p>Övervaka garantitider</p></div></div>
-        <div class="card"><div id="warr-list"></div></div>
+        <div class="sec-hd"><div><h2 data-i18n="nav.warr">Garantier</h2><p data-i18n="warr.sub">Övervaka garantitider</p></div></div>
+        <div class="card card-list"><div id="warr-list"></div></div>
       </div>
 
       <!-- RECEIPTS -->
       <div class="page" id="p-receipts">
         <div class="sec-hd">
-          <div><h2>Kvitton</h2><p>Spara och organisera kvitton</p></div>
-          <button class="btn btn-p" onclick="openReceipt()">+ Nytt kvitto</button>
+          <div><h2 data-i18n="nav.receipts">Kvitton</h2><p data-i18n="receipts.sub">Spara och organisera kvitton</p></div>
+          <button class="btn btn-p" onclick="openReceipt()" data-i18n="add.receipts">+ Nytt kvitto</button>
         </div>
-        <div class="card" id="receipts-list"></div>
+        <div class="card card-list" id="receipts-list"></div>
       </div>
 
       <!-- ECONOMY -->
@@ -1231,20 +1357,24 @@ body.compact .stat-val{font-size:22px}
               <span class="eco-hero-month-lbl" id="eco-month-lbl"></span>
               <button class="eco-hero-month-btn" id="eco-next-btn" onclick="ecoMonthStep(1)">›</button>
             </div>
-            <select id="eco-person-filter" onchange="renderEco()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer"></select>
+            <div id="eco-scope-btns" style="display:flex;gap:4px">
+              <button id="eco-scope-shared"  class="eco-scope-btn on" onclick="setEcoScope('shared')" data-i18n="eco.scope.shared">👥 Familjen</button>
+              <button id="eco-scope-personal" class="eco-scope-btn"  onclick="setEcoScope('personal')" data-i18n="eco.scope.personal">👤 Min</button>
+            </div>
+            <select id="eco-person-filter" onchange="renderEco()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;display:none"></select>
           </div>
           <div class="eco-hero-balance-wrap">
-            <div class="eco-hero-balance-label">Nettosaldo</div>
+            <div class="eco-hero-balance-label" data-i18n="eco.balance">Nettosaldo</div>
             <div class="eco-hero-balance" id="eco-h-balance">—</div>
           </div>
           <div class="eco-hero-stats-row">
             <div class="eco-hero-stat">
-              <div class="eco-hero-stat-label">↑ Inkomst</div>
+              <div class="eco-hero-stat-label" data-i18n="eco.income">↑ Inkomst</div>
               <div class="eco-hero-stat-val income" id="eco-h-income">—</div>
             </div>
             <div class="eco-hero-divider"></div>
             <div class="eco-hero-stat">
-              <div class="eco-hero-stat-label">↓ Utgifter</div>
+              <div class="eco-hero-stat-label" data-i18n="eco.expense">↓ Utgifter</div>
               <div class="eco-hero-stat-val expense" id="eco-h-expense">—</div>
             </div>
           </div>
@@ -1255,16 +1385,16 @@ body.compact .stat-val{font-size:22px}
         <!-- Quick actions -->
         <div class="eco-qa">
           <button class="eco-qa-btn qa-expense" onclick="openTransModal()">
-            <div class="eco-qa-icon">−</div>Utgift
+            <div class="eco-qa-icon">−</div><span data-i18n="eco.qa.expense">Utgift</span>
           </button>
           <button class="eco-qa-btn qa-income" onclick="openTransModal();setTimeout(()=>setTransType('income'),50)">
-            <div class="eco-qa-icon">+</div>Inkomst
+            <div class="eco-qa-icon">+</div><span data-i18n="eco.qa.income">Inkomst</span>
           </button>
           <button class="eco-qa-btn qa-import" onclick="openImport()">
-            <div class="eco-qa-icon">⬆</div>Importera
+            <div class="eco-qa-icon">⬆</div><span data-i18n="eco.qa.import">Importera</span>
           </button>
           <button class="eco-qa-btn qa-budget" onclick="switchEcoTab('budget')">
-            <div class="eco-qa-icon">🎯</div>Budget
+            <div class="eco-qa-icon">🎯</div><span data-i18n="eco.qa.budget">Budget</span>
           </button>
         </div>
 
@@ -1274,11 +1404,12 @@ body.compact .stat-val{font-size:22px}
 
         <!-- Tab bar -->
         <div class="eco-tabs">
-          <button class="eco-tab on" id="etab-overview"  onclick="switchEcoTab('overview')">Översikt</button>
-          <button class="eco-tab"    id="etab-trans"     onclick="switchEcoTab('trans')">Transaktioner</button>
-          <button class="eco-tab"    id="etab-budget"    onclick="switchEcoTab('budget')">Budget</button>
-          <button class="eco-tab"    id="etab-savings"   onclick="switchEcoTab('savings')">Sparande</button>
-          <button class="eco-tab"    id="etab-subs"      onclick="switchEcoTab('subs')">Abonnemang</button>
+          <button class="eco-tab on" id="etab-overview"  onclick="switchEcoTab('overview')" data-i18n="eco.tab.overview">Översikt</button>
+          <button class="eco-tab"    id="etab-trans"     onclick="switchEcoTab('trans')" data-i18n="eco.tab.trans">Transaktioner</button>
+          <button class="eco-tab"    id="etab-budget"    onclick="switchEcoTab('budget')" data-i18n="eco.tab.budget">Budget</button>
+          <button class="eco-tab"    id="etab-savings"   onclick="switchEcoTab('savings')" data-i18n="eco.tab.savings">Sparande</button>
+          <button class="eco-tab"    id="etab-subs"      onclick="switchEcoTab('subs')" data-i18n="eco.tab.subs">Abonnemang</button>
+          <button class="eco-tab"    id="etab-imports"   onclick="switchEcoTab('imports')" data-i18n="eco.tab.imports">Importer</button>
         </div>
 
         <!-- ── OVERVIEW PANEL ── -->
@@ -1362,6 +1493,30 @@ body.compact .stat-val{font-size:22px}
           </div>
         </div>
 
+        <!-- ── IMPORTS PANEL ── -->
+        <div id="epanel-imports" style="display:none">
+          <div class="card" style="margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <div>
+                <h3 style="font-size:15px;font-weight:700" data-i18n="eco.imports.title">Importhistorik</h3>
+                <div style="font-size:12px;color:var(--ink3);margin-top:2px" data-i18n="eco.imports.sub">CSV-importer och deras transaktioner</div>
+              </div>
+              <button class="btn btn-s btn-sm" onclick="openImport()">📥 Importera CSV</button>
+            </div>
+            <div id="eco-imports-list"></div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <div>
+                <h3 style="font-size:15px;font-weight:700" data-i18n="eco.catrules.title">Kategoriregler</h3>
+                <div style="font-size:12px;color:var(--ink3);margin-top:2px" data-i18n="eco.catrules.sub">Inlärda regler för automatisk kategorisering</div>
+              </div>
+              <button class="btn btn-s btn-sm" onclick="renderCatRules()">🔄</button>
+            </div>
+            <div id="eco-cat-rules-list"></div>
+          </div>
+        </div>
+
         <!-- ── SUBSCRIPTIONS PANEL ── -->
         <div id="epanel-subs" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
@@ -1384,22 +1539,22 @@ body.compact .stat-val{font-size:22px}
           <!-- Invite hero -->
           <div class="fam-invite-hero">
             <div class="fam-invite-hero-left">
-              <div class="fam-invite-eyebrow">Aktiv familj</div>
+              <div class="fam-invite-eyebrow" data-i18n="family.eyebrow">Aktiv familj</div>
               <div class="fam-invite-name" id="fam-hero-name">Min familj</div>
               <div class="fam-invite-code-row">
-                <span class="fam-invite-label">Inbjudningskod</span>
+                <span class="fam-invite-label" data-i18n="family.invite_code">Inbjudningskod</span>
                 <span class="fam-invite-code" id="invite-code">———</span>
-                <button class="btn btn-s btn-xs" onclick="copyInvite()">📋 Kopiera</button>
+                <button class="btn btn-s btn-xs" onclick="copyInvite()" data-i18n="family.copy_code">📋 Kopiera</button>
               </div>
             </div>
             <div class="fam-invite-right">
               <div class="fam-invite-email-wrap">
                 <input class="fi" id="inv-email" type="email" placeholder="Bjud in via e-post…" style="flex:1;min-width:0">
-                <button class="btn btn-p btn-sm" onclick="sendInvite()">Skicka →</button>
+                <button class="btn btn-p btn-sm" onclick="sendInvite()" data-i18n="family.send_invite">Skicka →</button>
               </div>
               <div class="fam-invite-actions">
-                <button class="btn btn-s btn-sm" onclick="openCreateFamily()">＋ Ny familj</button>
-                <button class="btn btn-s btn-sm" onclick="openJoinFamily()">🔗 Gå med</button>
+                <button class="btn btn-s btn-sm" onclick="openCreateFamily()" data-i18n="family.new">＋ Ny familj</button>
+                <button class="btn btn-s btn-sm" onclick="openJoinFamily()" data-i18n="family.join_btn">🔗 Gå med</button>
               </div>
             </div>
           </div>
@@ -1409,7 +1564,7 @@ body.compact .stat-val{font-size:22px}
             <!-- Members -->
             <div class="fam-section">
               <div class="fam-section-hd">
-                <span class="fam-section-title">👥 Medlemmar</span>
+                <span class="fam-section-title" data-i18n="family.section.members">👥 Medlemmar</span>
                 <span class="fam-member-count badge b-blue" id="fam-member-count"></span>
               </div>
               <div id="members-list"></div>
@@ -1417,7 +1572,7 @@ body.compact .stat-val{font-size:22px}
             <!-- My families -->
             <div class="fam-section">
               <div class="fam-section-hd">
-                <span class="fam-section-title">🏠 Mina familjer</span>
+                <span class="fam-section-title" data-i18n="family.section.families">🏠 Mina familjer</span>
               </div>
               <div id="families-list"></div>
             </div>
@@ -1428,8 +1583,8 @@ body.compact .stat-val{font-size:22px}
 
       <!-- SETTINGS -->
       <div class="page" id="p-settings">
-        <div class="sec-hd"><div><h2>Inställningar</h2><p>Anpassa Vault efter dina önskemål</p></div></div>
-        <div style="max-width:600px">
+        <div class="sec-hd"><div><h2 data-i18n="settings.title">Inställningar</h2><p data-i18n="settings.sub">Anpassa Vault efter dina önskemål</p></div></div>
+        <div class="settings-layout">
           <!-- Profile -->
           <div class="set-section">
             <div class="set-section-hd" data-i18n="settings.account">Konto</div>
@@ -1449,17 +1604,17 @@ body.compact .stat-val{font-size:22px}
             </div>
             <div class="set-row">
               <div class="set-row-left">
-                <div class="set-row-label">Aktiv familj</div>
+                <div class="set-row-label" data-i18n="settings.family">Aktiv familj</div>
                 <div class="set-row-sub" id="set-family-display">—</div>
               </div>
-              <button class="btn btn-s btn-sm" onclick="go('family')">Hantera →</button>
+              <button class="btn btn-s btn-sm" onclick="go('family')" data-i18n="settings.manage_fam">Hantera →</button>
             </div>
             <div class="set-row">
               <div class="set-row-left">
-                <div class="set-row-label">Lösenord</div>
-                <div class="set-row-sub">Byt ditt lösenord</div>
+                <div class="set-row-label" data-i18n="settings.password">Lösenord</div>
+                <div class="set-row-sub" data-i18n="settings.password.sub">Byt ditt lösenord</div>
               </div>
-              <button class="btn btn-s btn-sm" onclick="openChangePassword()">Byt →</button>
+              <button class="btn btn-s btn-sm" onclick="openChangePassword()" data-i18n="settings.change_pw">Byt →</button>
             </div>
           </div>
           <!-- Appearance -->
@@ -1474,16 +1629,6 @@ body.compact .stat-val{font-size:22px}
             </div>
             <div class="set-row">
               <div class="set-row-left">
-                <div class="set-row-label" data-i18n="settings.compact">Kompaktläge</div>
-                <div class="set-row-sub" data-i18n="settings.compact_sub">Tätare layout med mindre mellanrum</div>
-              </div>
-              <label class="set-toggle">
-                <input type="checkbox" id="set-compact" onchange="toggleCompact(this)">
-                <span class="set-toggle-track"></span>
-              </label>
-            </div>
-            <div class="set-row">
-              <div class="set-row-left">
                 <div class="set-row-label" data-i18n="settings.language">Språk</div>
                 <div class="set-row-sub" data-i18n="settings.language_sub">Välj gränssnittsspråk</div>
               </div>
@@ -1495,11 +1640,11 @@ body.compact .stat-val{font-size:22px}
           </div>
           <!-- Notifications -->
           <div class="set-section">
-            <div class="set-section-hd">Påminnelser</div>
+            <div class="set-section-hd" data-i18n="settings.notifications">Påminnelser</div>
             <div class="set-row">
               <div class="set-row-left">
-                <div class="set-row-label">Servicevarningar</div>
-                <div class="set-row-sub">Visa varning vid kommande service</div>
+                <div class="set-row-label" data-i18n="settings.svc_warn">Servicevarningar</div>
+                <div class="set-row-sub" data-i18n="settings.svc_warn.sub">Visa varning vid kommande service</div>
               </div>
               <label class="set-toggle">
                 <input type="checkbox" id="set-svc-warn" checked onchange="saveSettingsBool('svc_warn',this.checked)">
@@ -1508,8 +1653,8 @@ body.compact .stat-val{font-size:22px}
             </div>
             <div class="set-row">
               <div class="set-row-left">
-                <div class="set-row-label">Garantivarningar</div>
-                <div class="set-row-sub">Visa varning vid utgående garantier</div>
+                <div class="set-row-label" data-i18n="settings.warr_warn">Garantivarningar</div>
+                <div class="set-row-sub" data-i18n="settings.warr_warn.sub">Visa varning vid utgående garantier</div>
               </div>
               <label class="set-toggle">
                 <input type="checkbox" id="set-warr-warn" checked onchange="saveSettingsBool('warr_warn',this.checked)">
@@ -1518,8 +1663,8 @@ body.compact .stat-val{font-size:22px}
             </div>
             <div class="set-row">
               <div class="set-row-left">
-                <div class="set-row-label">Varningsdagar service</div>
-                <div class="set-row-sub">Antal dagar i förväg för servicevarning</div>
+                <div class="set-row-label" data-i18n="settings.svc_days">Varningsdagar service</div>
+                <div class="set-row-sub" data-i18n="settings.svc_days.sub">Antal dagar i förväg för servicevarning</div>
               </div>
               <select class="fi" id="set-svc-days" style="width:90px" onchange="saveSettingsVal('svc_warn_days',this.value)">
                 <option value="14">14 dagar</option>
@@ -1531,11 +1676,11 @@ body.compact .stat-val{font-size:22px}
           </div>
           <!-- Email notifications -->
           <div class="set-section">
-            <div class="set-section-hd">📧 E-postpåminnelser</div>
+            <div class="set-section-hd" data-i18n="settings.email_notif">📧 E-postpåminnelser</div>
             <div class="set-row">
               <div class="set-row-left">
-                <div class="set-row-label">Aktivera e-postpåminnelser</div>
-                <div class="set-row-sub">Få e-post när service eller garanti är nära</div>
+                <div class="set-row-label" data-i18n="settings.notif_email">Aktivera e-postpåminnelser</div>
+                <div class="set-row-sub" data-i18n="settings.notif_email.sub">Få e-post när service eller garanti är nära</div>
               </div>
               <label class="set-toggle">
                 <input type="checkbox" id="set-notif-email" checked>
@@ -1544,40 +1689,40 @@ body.compact .stat-val{font-size:22px}
             </div>
             <div class="set-row">
               <div class="set-row-left">
-                <div class="set-row-label">Dagar före service</div>
-                <div class="set-row-sub">Skicka påminnelse X dagar före servicedatum</div>
+                <div class="set-row-label" data-i18n="settings.notif_svc_days">Dagar före service</div>
+                <div class="set-row-sub" data-i18n="settings.notif_svc_days.sub">Skicka påminnelse X dagar före servicedatum</div>
               </div>
               <input type="number" class="fi" id="set-notif-svc-days" value="7" min="1" max="90" style="width:80px">
             </div>
             <div class="set-row">
               <div class="set-row-left">
-                <div class="set-row-label">Dagar före garanti</div>
-                <div class="set-row-sub">Skicka påminnelse X dagar innan garantin utgår</div>
+                <div class="set-row-label" data-i18n="settings.notif_warr_days">Dagar före garanti</div>
+                <div class="set-row-sub" data-i18n="settings.notif_warr_days.sub">Skicka påminnelse X dagar innan garantin utgår</div>
               </div>
               <input type="number" class="fi" id="set-notif-warr-days" value="30" min="1" max="365" style="width:80px">
             </div>
             <div class="set-row">
               <div></div>
-              <button class="btn btn-p btn-sm" onclick="saveNotifSettings()">Spara e-postinställningar</button>
+              <button class="btn btn-p btn-sm" onclick="saveNotifSettings()" data-i18n="settings.save_notif">Spara e-postinställningar</button>
             </div>
           </div>
           <!-- Dashboard widgets -->
           <div class="set-section">
-            <div class="set-section-hd">📊 Dashboard-widgets</div>
-            <div class="set-widget-row"><span class="set-widget-label">📋 Uppgifter</span><label class="set-toggle"><input type="checkbox" id="set-widget-tasks" checked onchange="toggleWidget('tasks',this)"><span class="set-toggle-track"></span></label></div>
-            <div class="set-widget-row"><span class="set-widget-label">💰 Ekonomi</span><label class="set-toggle"><input type="checkbox" id="set-widget-eco" checked onchange="toggleWidget('eco',this)"><span class="set-toggle-track"></span></label></div>
-            <div class="set-widget-row"><span class="set-widget-label">🔧 Service</span><label class="set-toggle"><input type="checkbox" id="set-widget-service" checked onchange="toggleWidget('service',this)"><span class="set-toggle-track"></span></label></div>
-            <div class="set-widget-row"><span class="set-widget-label">📦 Senaste saker</span><label class="set-toggle"><input type="checkbox" id="set-widget-recent" checked onchange="toggleWidget('recent',this)"><span class="set-toggle-track"></span></label></div>
-            <div class="set-widget-row"><span class="set-widget-label">📜 Aktivitetsflöde</span><label class="set-toggle"><input type="checkbox" id="set-widget-activity" checked onchange="toggleWidget('activity',this)"><span class="set-toggle-track"></span></label></div>
-            <div class="set-widget-row"><span class="set-widget-label">📈 Inventarievärde</span><label class="set-toggle"><input type="checkbox" id="set-widget-chart" checked onchange="toggleWidget('value_chart',this)"><span class="set-toggle-track"></span></label></div>
+            <div class="set-section-hd" data-i18n="settings.widgets">📊 Dashboard-widgets</div>
+            <div class="set-widget-row"><span class="set-widget-label" data-i18n="dash.widget.tasks">📋 Uppgifter</span><label class="set-toggle"><input type="checkbox" id="set-widget-tasks" checked onchange="toggleWidget('tasks',this)"><span class="set-toggle-track"></span></label></div>
+            <div class="set-widget-row"><span class="set-widget-label" data-i18n="dash.widget.eco">💰 Ekonomi</span><label class="set-toggle"><input type="checkbox" id="set-widget-eco" checked onchange="toggleWidget('eco',this)"><span class="set-toggle-track"></span></label></div>
+            <div class="set-widget-row"><span class="set-widget-label" data-i18n="dash.widget.service">🔧 Service</span><label class="set-toggle"><input type="checkbox" id="set-widget-service" checked onchange="toggleWidget('service',this)"><span class="set-toggle-track"></span></label></div>
+            <div class="set-widget-row"><span class="set-widget-label" data-i18n="dash.widget.items">📦 Senaste saker</span><label class="set-toggle"><input type="checkbox" id="set-widget-recent" checked onchange="toggleWidget('recent',this)"><span class="set-toggle-track"></span></label></div>
+            <div class="set-widget-row"><span class="set-widget-label" data-i18n="dash.widget.activity">📜 Aktivitetsflöde</span><label class="set-toggle"><input type="checkbox" id="set-widget-activity" checked onchange="toggleWidget('activity',this)"><span class="set-toggle-track"></span></label></div>
+            <div class="set-widget-row"><span class="set-widget-label" data-i18n="dash.widget.value">📈 Inventarievärde</span><label class="set-toggle"><input type="checkbox" id="set-widget-chart" checked onchange="toggleWidget('value_chart',this)"><span class="set-toggle-track"></span></label></div>
           </div>
           <!-- Data -->
           <div class="set-section">
-            <div class="set-section-hd">Data</div>
+            <div class="set-section-hd" data-i18n="settings.data">Data</div>
             <div class="set-row">
               <div class="set-row-left">
-                <div class="set-row-label">Valuta</div>
-                <div class="set-row-sub">Valuta för ekonomimodulen</div>
+                <div class="set-row-label" data-i18n="settings.currency">Valuta</div>
+                <div class="set-row-sub" data-i18n="settings.currency.sub">Valuta för ekonomimodulen</div>
               </div>
               <select class="fi" id="set-currency" style="width:90px" onchange="saveSettingsVal('currency',this.value)">
                 <option value="SEK" selected>SEK</option>
@@ -1588,8 +1733,8 @@ body.compact .stat-val{font-size:22px}
             </div>
             <div class="set-row">
               <div class="set-row-left">
-                <div class="set-row-label">Rensa cache</div>
-                <div class="set-row-sub">Tar bort lokalt cachad data (checklists, historik)</div>
+                <div class="set-row-label" data-i18n="settings.clear_cache">Rensa cache</div>
+                <div class="set-row-sub" data-i18n="settings.clear_cache.sub">Tar bort lokalt cachad data (checklists, historik)</div>
               </div>
               <button class="btn btn-d btn-sm" onclick="clearLocalCache()">🗑️ Rensa</button>
             </div>
@@ -1600,15 +1745,15 @@ body.compact .stat-val{font-size:22px}
       <!-- CHECKLISTS -->
       <div class="page" id="p-checklists">
         <div class="sec-hd">
-          <div><h2>Listor</h2><p>Handlingslistor och checklistor</p></div>
-          <button class="btn btn-p" onclick="openChecklist()">+ Ny lista</button>
+          <div><h2 data-i18n="nav.checklists">Listor</h2><p data-i18n="checklists.sub">Handlingslistor och checklistor</p></div>
+          <button class="btn btn-p" onclick="openChecklist()" data-i18n="add.checklists">+ Ny lista</button>
         </div>
         <div class="cl-board" id="cl-board"></div>
       </div>
 
       <!-- ADMIN -->
       <div class="page" id="p-admin">
-        <div class="sec-hd"><div><h2>Administration</h2><p>Systemöversikt</p></div></div>
+        <div class="sec-hd"><div><h2 data-i18n="nav.admin">Administration</h2><p data-i18n="admin.sub">Systemöversikt</p></div></div>
         <div class="stats-grid" id="admin-stats"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
           <div class="card">
@@ -1681,6 +1826,7 @@ body.compact .stat-val{font-size:22px}
           <option value="broken">🔴 Trasig</option>
           <option value="lent">📤 Utlånad</option>
           <option value="for_sale">🏷️ Till salu</option>
+          <option value="missing">❓ Bortappad</option>
         </select>
       </div>
     </div>
@@ -1845,8 +1991,8 @@ body.compact .stat-val{font-size:22px}
     <h2 id="m-trans-title">Ny transaktion</h2>
     <div class="fg"><label>Typ</label>
       <div style="display:flex;gap:8px">
-        <button id="tt-expense" class="btn btn-d" style="flex:1" onclick="setTransType('expense')" type="button">− Utgift</button>
-        <button id="tt-income" class="btn btn-s" style="flex:1" onclick="setTransType('income')" type="button">+ Inkomst</button>
+        <button id="tt-expense" class="btn btn-d" style="flex:1" onclick="setTransType('expense')" type="button" data-i18n="modal.trans.expense">− Utgift</button>
+        <button id="tt-income" class="btn btn-s" style="flex:1" onclick="setTransType('income')" type="button" data-i18n="modal.trans.income">+ Inkomst</button>
       </div>
     </div>
     <div class="fg"><label for="tr-desc">Beskrivning *</label><input type="text" class="fi" id="tr-desc" placeholder="T.ex. ICA veckohandling"></div>
@@ -1856,11 +2002,19 @@ body.compact .stat-val{font-size:22px}
     </div>
     <div class="fg"><label for="tr-cat">Kategori</label><select class="fi" id="tr-cat"><option value="">Ingen kategori</option></select></div>
     <div class="fg"><label for="tr-note">Notering</label><textarea class="fi" id="tr-note" style="min-height:60px" placeholder="Valfri notering…"></textarea></div>
+    <div class="fg">
+      <label>Synlighet</label>
+      <div class="trans-scope-row">
+        <button type="button" id="tscope-shared"   class="trans-scope-btn on shared"    onclick="setTransScope('shared')" data-i18n="modal.trans.shared">👥 Dela med familjen</button>
+        <button type="button" id="tscope-personal" class="trans-scope-btn personal" onclick="setTransScope('personal')" data-i18n="modal.trans.personal">🔒 Bara jag</button>
+      </div>
+    </div>
     <div class="fr">
       <div class="fg"><label for="tr-receipt">Länka kvitto</label><select class="fi" id="tr-receipt"><option value="">Inget kvitto</option></select></div>
       <div class="fg"><label for="tr-item">Länka sak</label><select class="fi" id="tr-item"><option value="">Ingen sak</option></select></div>
     </div>
     <input type="hidden" id="tr-id">
+    <input type="hidden" id="tr-scope" value="shared">
     <div class="macts">
       <button class="btn btn-s" onclick="closeModal('m-trans')">Avbryt</button>
       <button class="btn btn-p" onclick="saveTrans()">Spara</button>
@@ -1896,9 +2050,12 @@ body.compact .stat-val{font-size:22px}
         <label for="bc-name">Namn *</label>
         <input type="text" class="fi" id="bc-name" placeholder="T.ex. Mat & Hushåll">
       </div>
-      <div class="fg" style="flex:0 0 80px">
+      <div class="fg" style="flex:0 0 auto">
         <label>Ikon</label>
-        <input type="text" class="fi" id="bc-icon" placeholder="💰" style="text-align:center;font-size:20px">
+        <div class="emoji-row" style="gap:6px">
+          <button class="emoji-sel" id="bc-icon-btn" onclick="openEmojiPicker('bc-icon','bc-icon-btn')" type="button">💰</button>
+          <input type="text" class="fi" id="bc-icon" placeholder="💰" maxlength="4" oninput="document.getElementById('bc-icon-btn').textContent=this.value||'💰'" style="width:60px;text-align:center;font-size:18px;margin:0">
+        </div>
       </div>
     </div>
     <div class="fr">
@@ -1932,9 +2089,12 @@ body.compact .stat-val{font-size:22px}
         <label for="sg-name">Namn *</label>
         <input type="text" class="fi" id="sg-name" placeholder="T.ex. Semester">
       </div>
-      <div class="fg" style="flex:0 0 80px">
+      <div class="fg" style="flex:0 0 auto">
         <label>Ikon</label>
-        <input type="text" class="fi" id="sg-icon" placeholder="🎯" style="text-align:center;font-size:20px">
+        <div class="emoji-row" style="gap:6px">
+          <button class="emoji-sel" id="sg-icon-btn" onclick="openEmojiPicker('sg-icon','sg-icon-btn')" type="button">🎯</button>
+          <input type="text" class="fi" id="sg-icon" placeholder="🎯" maxlength="4" oninput="document.getElementById('sg-icon-btn').textContent=this.value||'🎯'" style="width:60px;text-align:center;font-size:18px;margin:0">
+        </div>
       </div>
     </div>
     <div class="fr">
@@ -1962,9 +2122,12 @@ body.compact .stat-val{font-size:22px}
         <label for="sub-name">Namn *</label>
         <input type="text" class="fi" id="sub-name" placeholder="T.ex. Netflix">
       </div>
-      <div class="fg" style="flex:0 0 70px">
+      <div class="fg" style="flex:0 0 auto">
         <label>Ikon</label>
-        <input type="text" class="fi" id="sub-icon" placeholder="🔄" style="text-align:center;font-size:20px">
+        <div class="emoji-row" style="gap:6px">
+          <button class="emoji-sel" id="sub-icon-btn" onclick="openEmojiPicker('sub-icon','sub-icon-btn')" type="button">🔄</button>
+          <input type="text" class="fi" id="sub-icon" placeholder="🔄" maxlength="4" oninput="document.getElementById('sub-icon-btn').textContent=this.value||'🔄'" style="width:60px;text-align:center;font-size:18px;margin:0">
+        </div>
       </div>
     </div>
     <div class="fr">
@@ -2088,7 +2251,13 @@ body.compact .stat-val{font-size:22px}
     <h2>Ny lista</h2>
     <div class="fg"><label for="cli-title">Titel *</label><input type="text" class="fi" id="cli-title" placeholder="T.ex. Inköpslista, Packlista"></div>
     <div class="fr">
-      <div class="fg"><label>Ikon</label><input type="text" class="fi" id="cli-icon" placeholder="📋" maxlength="4" style="text-align:center;font-size:20px"></div>
+      <div class="fg">
+        <label>Ikon</label>
+        <div class="emoji-row" style="gap:6px">
+          <button class="emoji-sel" id="cli-icon-btn" onclick="openEmojiPicker('cli-icon','cli-icon-btn')" type="button">📋</button>
+          <input type="text" class="fi" id="cli-icon" placeholder="📋" maxlength="4" oninput="document.getElementById('cli-icon-btn').textContent=this.value||'📋'" style="width:60px;text-align:center;font-size:18px;margin:0">
+        </div>
+      </div>
       <div class="fg"><label>Färg</label><input type="color" class="fi" id="cli-color" value="#4D7CFF" style="padding:4px;cursor:pointer"></div>
     </div>
     <input type="hidden" id="cli-id">
@@ -2196,6 +2365,7 @@ body.compact .stat-val{font-size:22px}
 
 <!-- ── SCRIPTS ─────────────────────────────────────────────────── -->
 <!-- core -->
+<script src="js/core/emoji.js" defer></script>
 <script src="js/core/i18n.js" defer></script>
 <script src="js/core/state.js" defer></script>
 <script src="js/core/utils.js" defer></script>

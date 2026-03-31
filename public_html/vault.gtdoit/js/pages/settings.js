@@ -30,7 +30,6 @@ function renderSettings(){
   if(fdisp) fdisp.textContent = fam ? fam.name+' ('+A.members.length+' medlemmar)' : '—';
 
   // Toggle states
-  _setCheckbox('set-compact',      getSetting('compact', false));
   _setCheckbox('set-svc-warn',     getSetting('svc_warn', true));
   _setCheckbox('set-warr-warn',    getSetting('warr_warn', true));
   _setCheckbox('set-show-total',   getSetting('show_inv_total', true));
@@ -77,6 +76,20 @@ async function saveNotifSettings(){
 function toggleWidget(key, cb){
   setSetting('widget_'+key, cb.checked);
   toast(cb.checked ? '✅ Widget visas' : 'Widget dold');
+  // Immediately show/hide the widget on the dashboard
+  const idMap = {
+    tasks:'d-tasks-wrap', eco:'d-eco-wrap', service:'d-svc-wrap',
+    recent:'d-items-wrap', activity:'d-activity-wrap', value_chart:'d-value-wrap'
+  };
+  const el = document.getElementById(idMap[key]);
+  if(el){
+    if(cb.checked){
+      el.style.display = '';
+      if(typeof render === 'function') render('dash');
+    } else {
+      el.style.display = 'none';
+    }
+  }
 }
 
 function _setCheckbox(id, val){
@@ -87,11 +100,6 @@ function _setSelect(id, val){
   for(const opt of el.options){ if(opt.value===String(val)){ opt.selected=true; break; } }
 }
 
-function toggleCompact(cb){
-  setSetting('compact', cb.checked);
-  applyCompact();
-  toast(cb.checked ? '📐 Kompaktläge aktiverat' : '📐 Kompaktläge avaktiverat');
-}
 function applyCompact(){
   document.body.classList.toggle('compact', getSetting('compact', false));
 }

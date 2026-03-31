@@ -1,6 +1,7 @@
 // ── Dashboard ──────────────────────────────────────────────────────
 
 const _SV_SHORT = ['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+const _EN_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const _SV_FULL  = ['Januari','Februari','Mars','April','Maj','Juni','Juli','Augusti','September','Oktober','November','December'];
 
 // Dashboard widget visibility config
@@ -9,14 +10,12 @@ function dashWidget(key){ return getSetting('widget_'+key, true); }
 function renderDash(){
   // Greeting + date
   const hr = new Date().getHours();
-  const gr = hr<5?'God natt':hr<12?'God morgon':hr<18?'God eftermiddag':'God kväll';
+  const gr = hr<5?t('dash.greeting.night'):hr<12?t('dash.greeting.morning'):hr<18?t('dash.greeting.afternoon'):t('dash.greeting.evening');
   document.getElementById('dash-greeting').textContent = gr + ', ' + (A.user?.username||'') + '!';
+  const locale = getLang()==='en' ? 'en-GB' : 'sv-SE';
   document.getElementById('dash-date').textContent =
-    new Date().toLocaleDateString('sv-SE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    new Date().toLocaleDateString(locale,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
-  renderDashStats();
-  renderDashSpotlight();
-  renderDashAlerts();
   if(dashWidget('tasks'))    renderDashTasks();    else _hideWidget('d-tasks-wrap');
   if(dashWidget('eco'))      renderDashEco();      else _hideWidget('d-eco-wrap');
   if(dashWidget('service'))  renderDashService();  else _hideWidget('d-svc-wrap');
@@ -58,32 +57,32 @@ function renderDashStats(){
     </div>`;
 
   el.innerHTML =
-    chip('📦', A.items.length, 'Saker',
-      totalVal>0 ? fmtMoney(Math.round(totalVal)) + ' totalt' : A.cats.length+' kategorier',
+    chip('📦', A.items.length, t('dash.stat.items'),
+      totalVal>0 ? fmtMoney(Math.round(totalVal)) + ' ' + t('dash.stat.items.total') : A.cats.length+' '+t('dash.stat.items.cats'),
       'var(--accent)', '', "go('inv')") +
 
-    chip(activeTasks>0&&A.tasks.some(t=>!t.done&&t.priority==='urgent')?'🔴':'📋',
+    chip(activeTasks>0&&A.tasks.some(tk=>!tk.done&&tk.priority==='urgent')?'🔴':'📋',
       activeTasks,
-      activeTasks ? 'Aktiva uppgifter' : 'Uppgifter klara!',
-      doneTasks ? doneTasks+' avklarade' : 'Lägg till uppgifter',
+      activeTasks ? t('dash.stat.tasks.active') : t('dash.stat.tasks.alldone'),
+      doneTasks ? doneTasks+' '+t('dash.stat.tasks.done') : t('dash.stat.tasks.add'),
       activeTasks ? 'var(--amber)' : 'var(--green)',
       '', "go('tasks')") +
 
     chip(alerts>0?(svcOverdue>0?'🔴':'🟡'):'🔧',
       A.svcs.length,
-      alerts>0 ? (svcOverdue>0?'Service försenad':'Service snart') : 'Service',
-      alerts>0 ? (svcOverdue>0?svcOverdue+' försenad, '+svcSoon+' snart':svcSoon+' inom 30 dagar') : (A.svcs.length?A.svcs.length+' schemalagda':'Inget inlagt'),
+      alerts>0 ? (svcOverdue>0?t('dash.stat.svc.overdue'):t('dash.stat.svc.soon')) : t('dash.stat.svc.label'),
+      alerts>0 ? (svcOverdue>0?svcOverdue+' '+t('dash.stat.svc.overdue').toLowerCase()+', '+svcSoon+' '+t('dash.stat.svc.soon').toLowerCase():svcSoon+' '+t('dash.stat.svc.within30')) : (A.svcs.length?A.svcs.length+' '+t('dash.stat.svc.scheduled'):t('dash.stat.svc.empty')),
       alerts>0?(svcOverdue>0?'var(--rose)':'var(--amber)'):'var(--border2)',
       '', "go('svc')") +
 
     (bal!==null
       ? chip('💰',
           (bal>=0?'+':'')+fmtMoney(bal),
-          'Saldo '+_SV_SHORT[parseInt(A.ecoMonth.split('-')[1])-1],
-          expPct!==null ? expPct+'% av inkomst spenderat' : A.ecoMonth.split('-')[0],
+          t('eco.balance')+' '+(getLang()==='en'?_EN_SHORT:_SV_SHORT)[parseInt(A.ecoMonth.split('-')[1])-1],
+          expPct!==null ? expPct+'% '+t('dash.stat.spent') : A.ecoMonth.split('-')[0],
           bal>=0?'var(--green)':'var(--rose)',
           '', "go('eco')")
-      : chip('💰', '–', 'Ekonomi', 'Inga data denna månad', 'var(--border2)', '', "go('eco')")
+      : chip('💰', '–', t('nav.eco'), t('dash.stat.nodata'), 'var(--border2)', '', "go('eco')")
     );
 }
 
@@ -92,9 +91,9 @@ function renderDashSpotlight(){
   const el = document.getElementById('d-spotlight'); if(!el) return;
 
   // Priority: urgent task → overdue service → high task → warranty expiring
-  const urgent = A.tasks.find(t=>!t.done && t.priority==='urgent');
+  const urgent = A.tasks.find(tk=>!tk.done && tk.priority==='urgent');
   const svcOd  = A.svcs.find(s=>{ const d=daysTo(s.next_date); return d!==null&&d<0; });
-  const high   = A.tasks.find(t=>!t.done && t.priority==='high');
+  const high   = A.tasks.find(tk=>!tk.done && tk.priority==='high');
   const warnW  = A.items.find(i=>wSt(i.warranty)==='soon');
 
   let html = '';
@@ -102,7 +101,7 @@ function renderDashSpotlight(){
     html = `<div class="dash-spotlight urgent" onclick="editTask(${urgent.id})">
       <div class="ds-dot" style="background:var(--rose)"></div>
       <div class="ds-body">
-        <div class="ds-eyebrow">Akut uppgift</div>
+        <div class="ds-eyebrow">${t('dash.spotlight.urgent')}</div>
         <div class="ds-title">${esc(urgent.title)}</div>
         ${urgent.due_date?`<div class="ds-sub">📅 ${fmtDate(urgent.due_date)}</div>`:''}
       </div>
@@ -113,9 +112,9 @@ function renderDashSpotlight(){
     html = `<div class="dash-spotlight overdue" onclick="editSvc(${svcOd.id})">
       <div class="ds-dot" style="background:var(--rose)"></div>
       <div class="ds-body">
-        <div class="ds-eyebrow">Försenad service</div>
+        <div class="ds-eyebrow">${t('dash.spotlight.svc_over')}</div>
         <div class="ds-title">${esc(svcOd.title)}</div>
-        <div class="ds-sub">🔧 ${Math.abs(d)} dagar försenad${svcOd.item_name?' · '+esc(svcOd.item_name):''}</div>
+        <div class="ds-sub">🔧 ${Math.abs(d)} ${t('dash.days_overdue')}${svcOd.item_name?' · '+esc(svcOd.item_name):''}</div>
       </div>
       <div class="ds-arrow">→</div>
     </div>`;
@@ -123,7 +122,7 @@ function renderDashSpotlight(){
     html = `<div class="dash-spotlight high" onclick="editTask(${high.id})">
       <div class="ds-dot" style="background:var(--amber)"></div>
       <div class="ds-body">
-        <div class="ds-eyebrow">Hög prioritet</div>
+        <div class="ds-eyebrow">${t('dash.spotlight.high')}</div>
         <div class="ds-title">${esc(high.title)}</div>
         ${high.due_date?`<div class="ds-sub">📅 ${fmtDate(high.due_date)}</div>`:high.assigned_name?`<div class="ds-sub">👤 ${esc(high.assigned_name)}</div>`:''}
       </div>
@@ -134,9 +133,9 @@ function renderDashSpotlight(){
     html = `<div class="dash-spotlight warn" onclick="showDetail(${warnW.id})">
       <div class="ds-dot" style="background:var(--amber)"></div>
       <div class="ds-body">
-        <div class="ds-eyebrow">Garanti snart ut</div>
+        <div class="ds-eyebrow">${t('dash.spotlight.warr')}</div>
         <div class="ds-title">${esc(warnW.name)}</div>
-        <div class="ds-sub">⏳ ${d} dagar kvar</div>
+        <div class="ds-sub">⏳ ${d} ${t('dash.days_left')}</div>
       </div>
       <div class="ds-arrow">→</div>
     </div>`;
@@ -158,12 +157,12 @@ function renderDashAlerts(){
       <span class="dab-icon">${overdue.length?'🔴':'⚠️'}</span>
       <div>
         <div class="dab-title">${overdue.length
-          ? `${overdue.length} ${overdue.length===1?'försenad service':'försenade'}`
-          : `${soon.length} ${soon.length===1?'påminnelse':'påminnelser'} snart`}</div>
+          ? `${overdue.length} ${t('dash.stat.svc.overdue').toLowerCase()}`
+          : `${soon.length} ${t('dash.stat.svc.soon').toLowerCase()}`}</div>
         <div class="dab-sub">${al.slice(0,3).map(a=>esc(a.title)).join(' · ')}</div>
       </div>
     </div>
-    <button class="btn btn-sm ${overdue.length?'btn-d':'btn-g'}" onclick="go('svc')">Visa →</button>
+    <button class="btn btn-sm ${overdue.length?'btn-d':'btn-g'}" onclick="go('svc')">${t('dash.show')}</button>
   </div>`;
 }
 
@@ -173,34 +172,31 @@ function renderDashTasks(){
   const el = document.getElementById('d-tasks'); if(!el) return;
   const po = {urgent:0,high:1,medium:2,low:3};
   const priColor = {urgent:'var(--rose)',high:'var(--amber)',medium:'var(--accent)',low:'var(--green)'};
-  const priLbl   = {urgent:'Akut',high:'Hög',medium:'Medel',low:'Låg'};
+  const priLbl   = {urgent:t('tasks.priority.urgent'),high:t('tasks.priority.high'),medium:t('tasks.priority.medium'),low:t('tasks.priority.low')};
 
-  const active = A.tasks.filter(t=>!t.done)
+  const active = A.tasks.filter(tk=>!tk.done)
     .sort((a,b)=>{ if(po[a.priority]!==po[b.priority]) return po[a.priority]-po[b.priority];
       if(a.due_date&&b.due_date) return new Date(a.due_date)-new Date(b.due_date);
       if(a.due_date) return -1; if(b.due_date) return 1; return 0; })
     .slice(0,7);
-  const done = A.tasks.filter(t=>t.done).slice(0,5);
+  const done = A.tasks.filter(tk=>tk.done).slice(0,5);
 
-  // Quick-add row
-  let html = `<div class="dash-task-add">
-    <input class="fi" id="dash-quick-task" placeholder="+ Snabblägg uppgift…" onkeydown="if(event.key==='Enter')dashQuickAddTask()" style="border:none;background:transparent;font-size:13px;padding:10px 16px;width:100%;outline:none">
-  </div>`;
+  let html = '';
 
   if(!active.length){
-    html += `<div class="dash-empty-tasks">🎉 Alla uppgifter klara!</div>`;
+    html += `<div class="dash-empty-tasks">${t('dash.widget.tasks.empty')}</div>`;
   } else {
-    html += active.map(t=>{
-      const overdue = t.due_date && daysTo(t.due_date)<0;
-      return `<div class="dash-task-row" onclick="editTask(${t.id})">
-        <div class="dash-task-pri" style="background:${priColor[t.priority]}"></div>
-        <div class="chk" onclick="event.stopPropagation();toggleTask(${t.id})"></div>
+    html += active.map(tk=>{
+      const overdue = tk.due_date && daysTo(tk.due_date)<0;
+      return `<div class="dash-task-row" onclick="editTask(${tk.id})">
+        <div class="dash-task-pri" style="background:${priColor[tk.priority]}"></div>
+        <div class="chk" onclick="event.stopPropagation();toggleTask(${tk.id})"></div>
         <div class="dash-task-txt">
-          <span class="dash-task-title">${esc(t.title)}</span>
-          <span class="dash-task-meta">${overdue?`<span style="color:var(--rose)">⚠️ Försenad</span> · `:t.due_date?'📅 '+fmtDate(t.due_date)+' · ':''}${t.assigned_name?'👤 '+esc(t.assigned_name):''}
+          <span class="dash-task-title">${esc(tk.title)}</span>
+          <span class="dash-task-meta">${overdue?`<span style="color:var(--rose)">⚠️ ${t('dash.overdue')}</span> · `:tk.due_date?'📅 '+fmtDate(tk.due_date)+' · ':''}${tk.assigned_name?'👤 '+esc(tk.assigned_name):''}
           </span>
         </div>
-        <span class="dash-task-badge" style="background:${priColor[t.priority]}22;color:${priColor[t.priority]}">${priLbl[t.priority]}</span>
+        <span class="dash-task-badge" style="background:${priColor[tk.priority]}22;color:${priColor[tk.priority]}">${priLbl[tk.priority]}</span>
       </div>`;
     }).join('');
   }
@@ -210,12 +206,12 @@ function renderDashTasks(){
       ${_dashShowDone?'▲':'▼'} ${done.length} avklarade
     </div>`;
     if(_dashShowDone){
-      html += done.map(t=>`
+      html += done.map(tk=>`
         <div class="dash-task-row done">
           <div class="dash-task-pri" style="background:var(--border2)"></div>
-          <div class="chk on" onclick="toggleTask(${t.id})">✓</div>
+          <div class="chk on" onclick="toggleTask(${tk.id})">✓</div>
           <div class="dash-task-txt" style="text-decoration:line-through;opacity:.45">
-            <span class="dash-task-title">${esc(t.title)}</span>
+            <span class="dash-task-title">${esc(tk.title)}</span>
           </div>
         </div>`).join('');
     }
@@ -229,8 +225,8 @@ async function dashQuickAddTask(){
   const inp = document.getElementById('dash-quick-task');
   const title = inp?.value.trim(); if(!title) return;
   try {
-    const t = await api('POST','tasks',{title,priority:'medium',done:0});
-    A.tasks.unshift(t);
+    const newTask = await api('POST','tasks',{title,priority:'medium',done:0});
+    A.tasks.unshift(newTask);
     inp.value = '';
     badges(); renderDashTasks(); renderDashStats();
     toast('✅ '+title);
@@ -242,48 +238,43 @@ function renderDashEco(){
   const el  = document.getElementById('d-eco'); if(!el) return;
   const hd  = document.getElementById('d-eco-hd');
   const [y,m] = A.ecoMonth.split('-');
-  const lbl = _SV_SHORT[parseInt(m)-1]+' '+y;
+  const _SHORT = getLang()==='en' ? _EN_SHORT : _SV_SHORT;
+  const lbl = _SHORT[parseInt(m)-1]+' '+y;
 
   if(hd) hd.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-      <h3>💰 Ekonomi</h3>
       <div style="display:flex;align-items:center;gap:4px">
-        <button class="btn btn-g btn-xs" style="padding:2px 8px;font-size:13px" onclick="dashEcoStep(-1)">‹</button>
-        <span style="font-size:12px;font-weight:600;min-width:60px;text-align:center;color:var(--ink2)">${lbl}</span>
-        <button class="btn btn-g btn-xs" style="padding:2px 8px;font-size:13px" onclick="dashEcoStep(1)">›</button>
-        <button class="btn btn-g btn-xs" onclick="go('eco')" style="margin-left:4px">Se mer →</button>
+        <h3>${t('dash.widget.eco')}</h3>
+        <button class="btn btn-g btn-xs" style="padding:2px 6px;font-size:11px" onclick="dashEcoStep(-1)">‹</button>
+        <span style="font-size:11px;font-weight:600;min-width:52px;text-align:center;color:var(--ink2)">${lbl}</span>
+        <button class="btn btn-g btn-xs" style="padding:2px 6px;font-size:11px" onclick="dashEcoStep(1)">›</button>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-p btn-xs" onclick="go('eco');setTimeout(()=>openTransModal(),100)">+ Lägg till</button>
+        <button class="btn btn-g btn-xs" onclick="go('eco')">Se alla →</button>
       </div>
     </div>`;
 
-  if(!A.ecoSummary){
-    el.innerHTML=`<div class="dash-eco-empty">
-      <div style="font-size:28px;margin-bottom:8px">💸</div>
-      <div style="font-size:13px;color:var(--ink3)">Inga transaktioner för ${lbl}</div>
-      <button class="btn btn-p btn-sm" style="margin-top:12px" onclick="go('eco');setTimeout(()=>openTransModal(),100)">+ Lägg till transaktion</button>
-    </div>`;
-    return;
-  }
-
   const s   = A.ecoSummary;
-  const bal = parseFloat(s.balance)||0;
-  const inc = parseFloat(s.income)||0;
-  const exp = parseFloat(s.expense)||0;
+  const bal = s ? (parseFloat(s.balance)||0) : 0;
+  const inc = s ? (parseFloat(s.income)||0)  : 0;
+  const exp = s ? (parseFloat(s.expense)||0) : 0;
   const pct = inc>0 ? Math.min(exp/inc*100,100) : (exp>0?100:0);
   const barColor = pct>90?'#ff7096':pct>70?'#fbbf24':'#4ade80';
-  const recentTrans = (A.ecoTrans||[]).slice(0,5);
+  const cats = s ? (s.by_category||[]).filter(c=>parseFloat(c.total)>0) : [];
 
   el.innerHTML = `
     <div class="dash-eco-hero">
-      <div class="dash-eco-bal-lbl">Nettosaldo ${lbl}</div>
+      <div class="dash-eco-bal-lbl">${t('eco.balance')} ${lbl}</div>
       <div class="dash-eco-bal ${bal<0?'neg':''}">${(bal>=0?'+':'')+fmtMoney(bal)}</div>
       <div class="dash-eco-row">
         <div class="dash-eco-col">
-          <div class="dash-eco-lbl">↑ Inkomst</div>
+          <div class="dash-eco-lbl">${t('eco.income')}</div>
           <div class="dash-eco-val income">${fmtMoney(inc)}</div>
         </div>
         <div style="width:1px;background:rgba(255,255,255,.15)"></div>
         <div class="dash-eco-col">
-          <div class="dash-eco-lbl">↓ Utgifter</div>
+          <div class="dash-eco-lbl">${t('eco.expense')}</div>
           <div class="dash-eco-val expense">${fmtMoney(exp)}</div>
         </div>
       </div>
@@ -291,21 +282,7 @@ function renderDashEco(){
         <div class="dash-eco-bar-fill" style="width:${pct}%;background:${barColor}"></div>
       </div>
     </div>
-    ${recentTrans.length ? `
-    <div class="dash-eco-section-lbl">Senaste transaktioner</div>
-    ${recentTrans.map(t=>{
-      const isInc = t.type==='income';
-      const cat = (A.ecoBudgetCats||[]).find(c=>c.id==t.category_id);
-      return `<div class="dash-eco-cat" onclick="go('eco')">
-        <span style="font-size:15px;flex-shrink:0">${cat?.icon||'💰'}</span>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.description||cat?.name||'—')}</div>
-          <div style="font-size:10px;color:var(--ink3)">${t.trans_date?fmtDate(t.trans_date):''}</div>
-        </div>
-        <div style="font-size:13px;font-weight:700;font-family:var(--mono);flex-shrink:0;color:${isInc?'var(--green)':'var(--rose)'}">${isInc?'+':'-'}${fmtMoney(Math.abs(parseFloat(t.amount)||0))}</div>
-      </div>`;
-    }).join('')}` : `
-    ${(s.by_category||[]).slice(0,3).map(c=>{
+    ${cats.length ? cats.slice(0,4).map(c=>{
       const pctC = exp>0 ? Math.min(parseFloat(c.total)/exp*100,100) : 0;
       return `<div class="dash-eco-cat" onclick="go('eco')">
         <span style="font-size:15px;flex-shrink:0">${c.icon||'💰'}</span>
@@ -317,10 +294,7 @@ function renderDashEco(){
         </div>
         <div style="font-size:12px;font-weight:700;font-family:var(--mono);flex-shrink:0">${fmtMoney(c.total)}</div>
       </div>`;
-    }).join('')}`}
-    <div style="padding:8px 16px;border-top:1px solid var(--border)">
-      <button class="btn btn-s btn-sm" style="width:100%;justify-content:center" onclick="go('eco');setTimeout(()=>openTransModal(),100)">+ Ny transaktion</button>
-    </div>`;
+    }).join('') : `<div class="dash-eco-empty" style="padding:20px 16px;text-align:center;font-size:13px;color:var(--ink3)">Inga transaktioner för ${lbl}</div>`}`;
 }
 
 async function dashEcoStep(dir){
@@ -329,7 +303,8 @@ async function dashEcoStep(dir){
   if(nm>12){nm=1;ny++;} if(nm<1){nm=12;ny--;}
   A.ecoMonth = ny+'-'+String(nm).padStart(2,'0');
   const ecol = document.getElementById('eco-month-lbl');
-  if(ecol) ecol.textContent = _SV_FULL[parseInt(A.ecoMonth.split('-')[1])-1]+' '+A.ecoMonth.split('-')[0];
+  const locale2 = getLang()==='en' ? 'en-GB' : 'sv-SE';
+  if(ecol) ecol.textContent = new Date(A.ecoMonth+'-01').toLocaleDateString(locale2,{month:'long',year:'numeric'});
   try {
     const [summary, trans] = await Promise.all([
       api('GET','economy/summary?month='+A.ecoMonth),

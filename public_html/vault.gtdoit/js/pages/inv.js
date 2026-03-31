@@ -7,9 +7,9 @@ let _invView   = 'grid'; // 'grid' | 'list'
 // Parse comma-separated tags string into array
 function parseTags(str){ return (str||'').split(',').map(t=>t.trim()).filter(Boolean); }
 
-const STATUS_LABELS = { ok:'Fungerar', broken:'Trasig', lent:'Utlånad', for_sale:'Till salu' };
-const STATUS_ICONS  = { ok:'✅', broken:'🔴', lent:'📤', for_sale:'🏷️' };
-const STATUS_BADGE  = { ok:'b-green', broken:'b-rose', lent:'b-amber', for_sale:'b-purple' };
+const STATUS_LABELS = { ok:'Fungerar', broken:'Trasig', lent:'Utlånad', for_sale:'Till salu', missing:'Bortappad' };
+const STATUS_ICONS  = { ok:'✅', broken:'🔴', lent:'📤', for_sale:'🏷️', missing:'❓' };
+const STATUS_BADGE  = { ok:'b-green', broken:'b-rose', lent:'b-amber', for_sale:'b-purple', missing:'b-cyan' };
 function statusBadge(status){ const s=status||'ok'; return `<span class="badge ${STATUS_BADGE[s]||'b-green'}">${STATUS_ICONS[s]||'✅'} ${STATUS_LABELS[s]||s}</span>`; }
 function setStatusFilter(s){ A.statusFilter=s; renderInv(); }
 
@@ -54,7 +54,7 @@ function renderInv(){
   // Status filter chips
   const sfEl = document.getElementById('inv-status-chips');
   if(sfEl){
-    const sfOpts = [['all','Alla'],['ok','✅ Fungerar'],['broken','🔴 Trasig'],['lent','📤 Utlånad'],['for_sale','🏷️ Till salu']];
+    const sfOpts = [['all','Alla'],['ok','✅ Fungerar'],['broken','🔴 Trasig'],['lent','📤 Utlånad'],['for_sale','🏷️ Till salu'],['missing','❓ Bortappad']];
     sfEl.innerHTML = sfOpts.map(([val,lbl])=>{
       const cnt = val==='all' ? A.items.length : A.items.filter(i=>(i.status||'ok')===val).length;
       return cnt>0 || val==='all' ? `<div class="chip ${A.statusFilter===val?'on':''}" onclick="setStatusFilter('${val}')">${lbl}<span class="chip-cnt">${cnt}</span></div>` : '';
@@ -128,7 +128,7 @@ let _detailItemId = null;
 async function showDetail(id){
   _detailItemId = id;
   await _renderDetail(id);
-  go('detail');
+  go('detail', false, id);
 }
 
 async function refreshItemDetail(id){
@@ -209,6 +209,101 @@ function _renderSvcSection(svcs, itemId){
   return html;
 }
 
+function _renderItemHistory(id, recs){
+  // Build unified event list: receipts + completed services
+  const events = [];
+
+  // Receipts
+  recs.forEach(r => {
+    events.push({
+      type:   'rec',
+      date:   r.receipt_date && r.receipt_date !== '0000-00-00' ? r.receipt_date : null,
+      title:  r.title,
+      sub:    r.store || '',
+      amount: r.amount ? fmtMoney(r.amount) : null,
+      action: `viewReceipt(${r.id})`,
+    });
+  });
+
+  // Service history from localStorage
+  const svcHist = (typeof getItemSvcHistory === 'function') ? getItemSvcHistory(id) : [];
+  svcHist.forEach(h => {
+    events.push({
+      type:   'svc',
+      date:   h.doneDate || null,
+      title:  h.title,
+      sub:    h.notes || '',
+      amount: h.cost ? fmtMoney(h.cost) : null,
+      action: null,
+    });
+  });
+
+  // Sort newest first
+  events.sort((a, b) => {
+    if(!a.date && !b.date) return 0;
+    if(!a.date) return 1;
+    if(!b.date) return -1;
+    return new Date(b.date) - new Date(a.date);
+  });
+
+  const typeIcon  = { svc:'🔧', rec:'🧾', buy:'🛒' };
+  const typeClass = { svc:'type-svc', rec:'type-rec', buy:'type-buy' };
+
+  // Group by year-month
+  const groups = {};
+  events.forEach(e => {
+    const key = e.date ? e.date.slice(0,7) : '0000-00';
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(e);
+  });
+
+  const periodLabel = key => {
+    if(key === '0000-00') return 'Okänt datum';
+    const [y, m] = key.split('-');
+    const months = getLang()==='en'
+      ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+      : ['Januari','Februari','Mars','April','Maj','Juni','Juli','Augusti','September','Oktober','November','December'];
+    return months[parseInt(m)-1] + ' ' + y;
+  };
+
+  const sortedKeys = Object.keys(groups).sort().reverse();
+
+  let html = `<div class="detail-sec">
+    <div class="detail-sec-hd">
+      <h4>Historik (${events.length})</h4>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-s btn-xs" onclick="openReceiptFor(${id})">+ Kvitto</button>
+      </div>
+    </div>`;
+
+  if(!events.length){
+    html += `<div class="inv-history-empty">📋 Ingen historik ännu<br><span style="font-size:11px">Kvitton och utförd service visas här</span></div>`;
+  } else {
+    html += `<div class="inv-history-wrap">`;
+    sortedKeys.forEach(key => {
+      html += `<div class="inv-tl-period">${periodLabel(key)}</div>`;
+      groups[key].forEach(e => {
+        const amtColor = e.type==='svc' ? 'color:var(--accent2)' : 'color:var(--green)';
+        html += `<div class="inv-tl-item" ${e.action ? `onclick="${e.action}"` : ''}>
+          <div class="inv-tl-icon ${typeClass[e.type]||''}">${typeIcon[e.type]||'📌'}</div>
+          <div class="inv-tl-body">
+            <div class="inv-tl-title">${esc(e.title)}</div>
+            ${e.sub ? `<div class="inv-tl-sub">${esc(e.sub)}</div>` : ''}
+          </div>
+          <div class="inv-tl-right">
+            ${e.amount ? `<div class="inv-tl-amount" style="${amtColor}">${e.amount}</div>` : ''}
+            ${e.date   ? `<div class="inv-tl-date">${fmtDate(e.date)}</div>` : ''}
+          </div>
+        </div>`;
+      });
+    });
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
 async function _renderDetail(id){
   const i=A.items.find(x=>x.id==id); if(!i) return;
   const ws=wSt(i.warranty), wl={ok:'✅ Garanti giltig',soon:'⚠️ Garanti snart ut',expired:'❌ Garanti utgången'};
@@ -229,6 +324,7 @@ async function _renderDetail(id){
         <div class="detail-img">${i.photo?`<img src="${esc(i.photo)}" alt="${esc(i.name)}">`:`<span>${cIcon(i.category)}</span>`}</div>
         <div class="detail-actions">
           <button class="btn btn-p btn-sm" onclick="editItem(${id})">✏️ Redigera</button>
+          <button class="btn btn-s btn-sm" onclick="duplicateItem(${id})">⧉ Duplicera</button>
           <button class="btn btn-d btn-sm" onclick="delItem(${id})">🗑️ Ta bort</button>
           <button class="btn btn-t btn-sm" onclick="openSvcFor(${id})">🔧 Service</button>
           <button class="btn btn-s btn-sm" onclick="openReceiptFor(${id})">🧾 Kvitto</button>
@@ -254,14 +350,7 @@ async function _renderDetail(id){
         ${renderLoansSection(id, loans)}
         ${renderDocsSection(id, docs)}
         ${_renderSvcSection(svcs, id)}
-        <div class="detail-sec">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h4>Kvitton (${recs.length})</h4><button class="btn btn-s btn-xs" onclick="openReceiptFor(${id})">+ Lägg till</button></div>
-          ${recs.length?recs.map(r=>`<div class="rec-row" onclick="viewReceipt(${r.id})">
-            <div class="rec-thumb">${r.photo?`<img src="${esc(r.photo)}">`:'🧾'}</div>
-            <div class="rec-info"><div class="rec-title">${esc(r.title)}</div><div class="rec-meta">${r.store?esc(r.store)+' · ':''}${fmtDate(r.receipt_date)}</div></div>
-            ${r.amount?`<div class="rec-amount">${fmtMoney(r.amount)}</div>`:''}
-          </div>`).join(''):`<p style="font-size:13px;color:var(--ink3)">Inga kvitton</p>`}
-        </div>
+        ${_renderItemHistory(id, recs)}
       </div>
     </div>`;
 }
@@ -607,28 +696,76 @@ async function delItem(id){
   toast('🗑️ Borttagen'); go('inv');
 }
 
+async function duplicateItem(id){
+  const i = A.items.find(x=>x.id==id); if(!i) return;
+  const body = {
+    name      : i.name + ' (kopia)',
+    category  : i.category,
+    location  : i.location||'',
+    purchased : i.purchased&&i.purchased!=='0000-00-00' ? i.purchased : null,
+    price     : parseFloat(i.price)||0,
+    warranty  : i.warranty&&i.warranty!=='0000-00-00' ? i.warranty : null,
+    serial    : i.serial||'',
+    notes     : i.notes||'',
+    photo     : i.photo||'',
+    tags      : i.tags||'',
+    status    : i.status||'ok',
+  };
+  try {
+    const c = await api('POST','items', body);
+    A.items.unshift(c);
+    badges();
+    toast('✅ Kopierad: '+c.name);
+    showDetail(c.id);
+  } catch(e){ toast(e.message,'err'); }
+}
+
 // ── Category CRUD ──────────────────────────────────────────────────
 function renderCats(){
   document.getElementById('cg').innerHTML = A.cats.map(c=>{
     const cnt=A.items.filter(i=>i.category===c.name).length;
-    return `<div class="cat-card" onclick="setFilter('${esc(c.name)}');go('inv')">
-      <button class="cat-del" onclick="event.stopPropagation();delCat(${c.id})" title="Ta bort">×</button>
-      <div class="cat-icon">${c.icon}</div><h3>${esc(c.name)}</h3><p>${cnt} sak${cnt!==1?'er':''}</p>
+    const itemLabel = cnt===1 ? (getLang()==='en'?'item':'sak') : (getLang()==='en'?'items':'saker');
+    return `<div class="cat-card" onclick="setFilter('${esc(c.name)}');go('inv')" style="position:relative">
+      <button class="cat-edit" onclick="event.stopPropagation();editCat(${c.id})" title="${t('action.edit')}">✏️</button>
+      <button class="cat-del" onclick="event.stopPropagation();delCat(${c.id})" title="${t('action.delete')}">×</button>
+      <div class="cat-icon">${c.icon}</div><h3>${esc(c.name)}</h3><p>${cnt} ${itemLabel}</p>
     </div>`;
-  }).join('') + `<div class="cat-card" style="border:2px dashed var(--border2)" onclick="openCat()"><div class="cat-icon">➕</div><h3>Ny kategori</h3><p>Lägg till</p></div>`;
+  }).join('') + `<div class="cat-card" style="border:2px dashed var(--border2)" onclick="openCat()"><div class="cat-icon">➕</div><h3>${t('cats.add')}</h3><p>${t('cats.add_sub')}</p></div>`;
+}
+function editCat(id){
+  const c=A.cats.find(x=>x.id==id); if(!c) return;
+  document.getElementById('ci-name').value=c.name;
+  document.getElementById('ci-icon').value=c.icon||'📦';
+  const btn=document.getElementById('ci-icon-btn'); if(btn) btn.textContent=c.icon||'📦';
+  document.getElementById('ci-color').value=c.color||'#4D7CFF';
+  document.getElementById('ci-id').value=id;
+  const h=document.querySelector('#m-cat h2'); if(h) h.textContent=t('modal.cat.edit');
+  document.getElementById('m-cat').classList.add('on');
 }
 function openCat(){
   document.getElementById('ci-name').value='';
   document.getElementById('ci-icon').value='📦';
   const btn=document.getElementById('ci-icon-btn'); if(btn) btn.textContent='📦';
+  document.getElementById('ci-color').value='#4D7CFF';
   document.getElementById('ci-id').value='';
+  const h=document.querySelector('#m-cat h2'); if(h) h.textContent=t('modal.cat.new');
   document.getElementById('m-cat').classList.add('on');
 }
 async function saveCat(){
-  const name=document.getElementById('ci-name').value.trim(); if(!name){ toast('⚠️ Namn krävs','err'); return; }
+  const name=document.getElementById('ci-name').value.trim(); if(!name){ toast('⚠️ '+t('item.name')+' krävs','err'); return; }
   const icon=document.getElementById('ci-icon').value||'📦';
-  try { const c=await api('POST','categories',{name,icon,color:document.getElementById('ci-color').value||'#5B8EF0'}); A.cats.push(c); closeModal('m-cat'); toast('✅ Kategori sparad!'); render(A.page); }
-  catch(e){ toast(e.message,'err'); }
+  const color=document.getElementById('ci-color').value||'#5B8EF0';
+  const eid=document.getElementById('ci-id').value;
+  try {
+    if(eid){
+      const c=await api('PUT','categories/'+eid,{name,icon,color});
+      A.cats=A.cats.map(x=>x.id==eid?c:x);
+    } else {
+      const c=await api('POST','categories',{name,icon,color});
+      A.cats.push(c);
+    }
+    closeModal('m-cat'); toast('✅ '+t('toast.saved')); render(A.page);
+  } catch(e){ toast(e.message,'err'); }
 }
 async function delCat(id){
   if(!confirm('Ta bort kategorin?')) return;

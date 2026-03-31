@@ -1,26 +1,71 @@
 <?php
 // ── Economy routes ─────────────────────────────────────────────────
 
+function _tr_has_scope(): bool {
+    static $has = null;
+    if ($has === null) {
+        try { get_db()->query('SELECT scope FROM transactions LIMIT 0'); $has = true; }
+        catch (\Throwable $e) { $has = false; }
+    }
+    return $has;
+}
+
+function _eco_scope_clause(array &$params, int $fid, int $me, string $y, string $mo): string {
+    $scope   = sf('scope')   ?: '';   // 'personal' | 'shared' | '' = all shared (family default)
+    $user_id = intf('user_id') ?: 0;
+
+    // Base: always restrict to this family + month
+    $where = 'family_id=? AND YEAR(trans_date)=? AND MONTH(trans_date)=?';
+    $params = [$fid, $y, $mo];
+
+    if (!_tr_has_scope()) {
+        // scope column not yet in DB — show all family transactions
+        if ($user_id) { $where .= ' AND created_by=?'; $params[] = $user_id; }
+        return $where;
+    }
+
+    if ($scope === 'personal') {
+        $where .= ' AND scope="personal" AND created_by=?';
+        $params[] = $me;
+    } elseif ($user_id) {
+        $where .= ' AND created_by=?';
+        $params[] = $user_id;
+    } else {
+        $where .= ' AND scope="shared"';
+    }
+    return $where;
+}
+
 function eco_summary(): never {
     $u = require_auth(); $month = sf('month') ?: date('Y-m');
     [$y, $mo] = explode('-', $month);
-    $db = get_db(); $fid = $u['active_family_id'];
+    $db = get_db(); $fid = $u['active_family_id']; $me = $u['id'];
 
-    $s = $db->prepare('SELECT type, SUM(amount) AS total FROM transactions WHERE family_id=? AND YEAR(trans_date)=? AND MONTH(trans_date)=? GROUP BY type');
-    $s->execute([$fid, $y, $mo]); $rows = $s->fetchAll();
+    $params = [];
+    $where = _eco_scope_clause($params, $fid, $me, $y, $mo);
+
+    $s = $db->prepare("SELECT type, SUM(amount) AS total FROM transactions WHERE $where GROUP BY type");
+    $s->execute($params); $rows = $s->fetchAll();
     $income = 0; $expense = 0;
     foreach ($rows as $r) { if ($r['type']==='income') $income=$r['total']; else $expense=$r['total']; }
 
-    $c = $db->prepare('SELECT bc.name,bc.icon,bc.color,bc.budget,SUM(t.amount) AS total
+    $cp = $params;
+    $c = $db->prepare("SELECT bc.name,bc.icon,bc.color,bc.budget,SUM(t.amount) AS total
         FROM transactions t JOIN budget_categories bc ON bc.id=t.category_id
-        WHERE t.family_id=? AND t.type="expense" AND YEAR(t.trans_date)=? AND MONTH(t.trans_date)=?
-        GROUP BY bc.id ORDER BY total DESC');
-    $c->execute([$fid, $y, $mo]); $by_cat = $c->fetchAll();
+        WHERE t.$where AND t.type='expense'
+        GROUP BY bc.id ORDER BY total DESC");
+    $c->execute($cp); $by_cat = $c->fetchAll();
 
-    $t = $db->prepare('SELECT YEAR(trans_date) AS y, MONTH(trans_date) AS m, type, SUM(amount) AS total
-        FROM transactions WHERE family_id=? AND trans_date >= DATE_SUB(?,INTERVAL 6 MONTH)
-        GROUP BY YEAR(trans_date),MONTH(trans_date),type ORDER BY y,m');
-    $t->execute([$fid, $month . '-01']); $trend = $t->fetchAll();
+    // Trend always uses shared scope for family view (if scope column exists)
+    $tp = [$fid, $month . '-01'];
+    $tscope = '';
+    if (_tr_has_scope()) {
+        $tscope = (sf('scope')==='personal') ? 'AND scope="personal" AND created_by='.$me : 'AND scope="shared"';
+    }
+    $t = $db->prepare("SELECT YEAR(trans_date) AS y, MONTH(trans_date) AS m, type, SUM(amount) AS total
+        FROM transactions WHERE family_id=? AND trans_date >= DATE_SUB(?,INTERVAL 6 MONTH) $tscope
+        GROUP BY YEAR(trans_date),MONTH(trans_date),type ORDER BY y,m");
+    $t->execute($tp); $trend = $t->fetchAll();
 
     jout(['income' => (float)$income, 'expense' => (float)$expense, 'balance' => (float)($income - $expense), 'by_category' => $by_cat, 'trend' => $trend]);
 }
@@ -40,18 +85,25 @@ function eco_trans_bulk_delete(): never {
 function eco_trans_list(): never {
     $u = require_auth(); $month = sf('month') ?: date('Y-m');
     [$y, $mo] = explode('-', $month);
-    $s = get_db()->prepare('SELECT t.*,bc.name AS cat_name,bc.icon AS cat_icon,bc.color AS cat_color
+    $params = [];
+    $where = _eco_scope_clause($params, $u['active_family_id'], $u['id'], $y, $mo);
+    $s = get_db()->prepare("SELECT t.*,bc.name AS cat_name,bc.icon AS cat_icon,bc.color AS cat_color
         FROM transactions t LEFT JOIN budget_categories bc ON bc.id=t.category_id
-        WHERE t.family_id=? AND YEAR(t.trans_date)=? AND MONTH(t.trans_date)=?
-        ORDER BY t.trans_date DESC,t.created_at DESC');
-    $s->execute([$u['active_family_id'], $y, $mo]); jout($s->fetchAll());
+        WHERE t.$where
+        ORDER BY t.trans_date DESC,t.created_at DESC");
+    $s->execute($params); jout($s->fetchAll());
 }
 
 function eco_trans_create(): never {
     $u = require_auth(); $desc = sf('description'); if (!$desc) json_die(['error' => 'Beskrivning krävs']);
     $amt = ff('amount'); if ($amt <= 0) json_die(['error' => 'Belopp måste vara positivt']);
     $db = get_db(); $cid = intf('category_id') ?: null;
-    $db->prepare('INSERT INTO transactions (family_id,created_by,category_id,type,amount,description,note,trans_date) VALUES (?,?,?,?,?,?,?,?)')->execute([$u['active_family_id'], $u['id'], $cid, sf('type') ?: 'expense', $amt, $desc, sf('note'), df('trans_date') ?: date('Y-m-d')]);
+    if (_tr_has_scope()) {
+        $scope = in_array(sf('scope'), ['personal','shared']) ? sf('scope') : 'shared';
+        $db->prepare('INSERT INTO transactions (family_id,created_by,category_id,type,amount,description,note,trans_date,scope) VALUES (?,?,?,?,?,?,?,?,?)')->execute([$u['active_family_id'], $u['id'], $cid, sf('type') ?: 'expense', $amt, $desc, sf('note'), df('trans_date') ?: date('Y-m-d'), $scope]);
+    } else {
+        $db->prepare('INSERT INTO transactions (family_id,created_by,category_id,type,amount,description,note,trans_date) VALUES (?,?,?,?,?,?,?,?)')->execute([$u['active_family_id'], $u['id'], $cid, sf('type') ?: 'expense', $amt, $desc, sf('note'), df('trans_date') ?: date('Y-m-d')]);
+    }
     $id = $db->lastInsertId();
     $s = get_db()->prepare('SELECT t.*,bc.name AS cat_name,bc.icon AS cat_icon,bc.color AS cat_color FROM transactions t LEFT JOIN budget_categories bc ON bc.id=t.category_id WHERE t.id=?');
     $s->execute([$id]); jout($s->fetch(), 201);
@@ -59,7 +111,12 @@ function eco_trans_create(): never {
 
 function eco_trans_update(int $id): never {
     $u = require_auth(); $db = get_db(); $cid = intf('category_id') ?: null;
-    $db->prepare('UPDATE transactions SET category_id=?,type=?,amount=?,description=?,note=?,trans_date=? WHERE id=? AND family_id=?')->execute([$cid, sf('type') ?: 'expense', ff('amount'), sf('description'), sf('note'), df('trans_date') ?: date('Y-m-d'), $id, $u['active_family_id']]);
+    if (_tr_has_scope()) {
+        $scope = in_array(sf('scope'), ['personal','shared']) ? sf('scope') : 'shared';
+        $db->prepare('UPDATE transactions SET category_id=?,type=?,amount=?,description=?,note=?,trans_date=?,scope=? WHERE id=? AND family_id=?')->execute([$cid, sf('type') ?: 'expense', ff('amount'), sf('description'), sf('note'), df('trans_date') ?: date('Y-m-d'), $scope, $id, $u['active_family_id']]);
+    } else {
+        $db->prepare('UPDATE transactions SET category_id=?,type=?,amount=?,description=?,note=?,trans_date=? WHERE id=? AND family_id=?')->execute([$cid, sf('type') ?: 'expense', ff('amount'), sf('description'), sf('note'), df('trans_date') ?: date('Y-m-d'), $id, $u['active_family_id']]);
+    }
     $s = get_db()->prepare('SELECT t.*,bc.name AS cat_name,bc.icon AS cat_icon,bc.color AS cat_color FROM transactions t LEFT JOIN budget_categories bc ON bc.id=t.category_id WHERE t.id=?');
     $s->execute([$id]); jout($s->fetch());
 }
@@ -124,52 +181,168 @@ function eco_import(): never {
         json_die(['error' => 'Kunde inte hitta kolumner. Kontrollera att filen är rätt exporterad.', 'headers_found' => $headers]);
 
     $db = get_db(); $fid = $u['active_family_id'];
+
+    // Load budget categories
     $cs = $db->prepare('SELECT id,name,type FROM budget_categories WHERE family_id=?');
     $cs->execute([$fid]); $budgetCats = $cs->fetchAll();
 
+    // Detect whether Economy 2.0 schema (hash + import_id columns) is in place
+    $eco2 = false;
+    try { $db->query("SELECT hash FROM transactions LIMIT 0"); $eco2 = true; } catch (\Throwable $e) {}
 
-    // Count-based duplicate detection: handles identical transactions on same day
-    $existCount = [];
-    $existRows = $db->prepare('SELECT trans_date, ABS(amount) AS abs_amount, description, COUNT(*) AS cnt
-        FROM transactions WHERE family_id=? GROUP BY trans_date, ABS(amount), description');
-    $existRows->execute([$fid]);
-    foreach ($existRows->fetchAll() as $row) {
-        $key = $row['trans_date'].'|'.number_format((float)$row['abs_amount'],2,'.','').'|'.$row['description'];
-        $existCount[$key] = (int)$row['cnt'];
+    // Load DB cat rules if available
+    $dbCatRules = [];
+    if ($eco2) {
+        try {
+            $crs = $db->prepare('SELECT keyword, category_id FROM cat_rules WHERE family_id=?');
+            $crs->execute([$fid]);
+            foreach ($crs->fetchAll() as $r) $dbCatRules[mb_strtolower($r['keyword'])] = (int)$r['category_id'];
+        } catch (\Throwable $e) {}
     }
 
-    $ins = $db->prepare('INSERT INTO transactions (family_id,created_by,category_id,type,amount,description,note,trans_date,source_file) VALUES (?,?,?,?,?,?,?,?,?)');
+    // Create import record if schema supports it
+    $importId = null;
+    if ($eco2) {
+        try {
+            $db->prepare('INSERT INTO imports (family_id,created_by,filename,imported_count,skipped_count,dupe_count) VALUES (?,?,?,0,0,0)')
+                ->execute([$fid, $u['id'], basename($f['name'])]);
+            $importId = (int)$db->lastInsertId();
+        } catch (\Throwable $e) {}
+    }
+
     $imported = $skipped = $dupes = 0;
-    $fileCount = [];
 
-    for ($i = 1; $i < count($lines); $i++) {
-        $cols = array_map(fn($c) => trim($c, " \t\"\xC2\xA0"), explode($sep, $lines[$i]));
-        $date   = parse_sv_date($cols[$colDate] ?? '');
-        $desc   = clean_bank_desc($cols[$colDesc] ?? '');
-        $amount = parse_sv_amount($cols[$colAmount] ?? '');
-        if (!$date || !$desc || $amount === null || $amount == 0) { $skipped++; continue; }
+    if ($eco2) {
+        // ── New path: hash-based dedup ──────────────────────────────
+        $existHashes = [];
+        $eh = $db->prepare('SELECT hash FROM transactions WHERE family_id=? AND hash IS NOT NULL');
+        $eh->execute([$fid]);
+        foreach ($eh->fetchAll() as $row) $existHashes[$row['hash']] = true;
 
-        $type = $amount < 0 ? 'expense' : 'income';
-        if ($colType !== null && isset($cols[$colType])) {
-            $rt = mb_strtolower($cols[$colType]);
-            if (preg_match('/ins[\xc3\xa4a]ttning|l[\xc3\xb6o]n|[\xc3\xb6o]verf[\xc3\xb6o]ring.*fr[\xc3\xa5a]n|kredit|bidrag|[\xc3\xa5a]terbetal/i', $rt)) $type = 'income';
-            elseif (preg_match('/k[\xc3\xb6o]p|uttag|betalning|reserverat|debet/i', $rt)) $type = 'expense';
+        $ins = $db->prepare('INSERT IGNORE INTO transactions (family_id,created_by,category_id,type,amount,description,note,trans_date,source_file,import_id,hash) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+        $fileHashes = [];
+
+        for ($i = 1; $i < count($lines); $i++) {
+            $cols = array_map(fn($c) => trim($c, " \t\"\xC2\xA0"), explode($sep, $lines[$i]));
+            $date   = parse_sv_date($cols[$colDate] ?? '');
+            $desc   = clean_bank_desc($cols[$colDesc] ?? '');
+            $amount = parse_sv_amount($cols[$colAmount] ?? '');
+            if (!$date || !$desc || $amount === null || $amount == 0) { $skipped++; continue; }
+
+            $type = $amount < 0 ? 'expense' : 'income';
+            if ($colType !== null && isset($cols[$colType])) {
+                $rt = mb_strtolower($cols[$colType]);
+                if (preg_match('/ins[\xc3\xa4a]ttning|l[\xc3\xb6o]n|[\xc3\xb6o]verf[\xc3\xb6o]ring.*fr[\xc3\xa5a]n|kredit|bidrag|[\xc3\xa5a]terbetal/i', $rt)) $type = 'income';
+                elseif (preg_match('/k[\xc3\xb6o]p|uttag|betalning|reserverat|debet/i', $rt)) $type = 'expense';
+            }
+
+            $abs  = abs($amount);
+            $hash = sha1($date . '|' . number_format($abs, 2, '.', '') . '|' . $desc);
+            $fileHashes[$hash] = ($fileHashes[$hash] ?? 0) + 1;
+            $effectiveHash = $fileHashes[$hash] > 1 ? $hash . '_' . $fileHashes[$hash] : $hash;
+
+            if (isset($existHashes[$effectiveHash])) { $dupes++; continue; }
+
+            $catId = auto_categorize_with_rules($desc, $type, $budgetCats, $dbCatRules);
+            $ins->execute([$fid, $u['id'], $catId, $type, $abs, $desc, null, $date, basename($f['name']), $importId, $effectiveHash]);
+            if ($ins->rowCount() > 0) { $existHashes[$effectiveHash] = true; $imported++; }
+            else { $dupes++; }
         }
 
-        $abs = abs($amount);
-        $key = $date.'|'.number_format($abs,2,'.','').'|'.$desc;
-        $fileCount[$key] = ($fileCount[$key] ?? 0) + 1;
-        $alreadyInDb = $existCount[$key] ?? 0;
+        if ($importId) {
+            $db->prepare('UPDATE imports SET imported_count=?,skipped_count=?,dupe_count=? WHERE id=?')
+                ->execute([$imported, $skipped, $dupes, $importId]);
+        }
+    } else {
+        // ── Legacy path: count-based dedup (schema not migrated yet) ─
+        $existCount = [];
+        $existRows = $db->prepare('SELECT trans_date, ABS(amount) AS abs_amount, description, COUNT(*) AS cnt
+            FROM transactions WHERE family_id=? GROUP BY trans_date, ABS(amount), description');
+        $existRows->execute([$fid]);
+        foreach ($existRows->fetchAll() as $row) {
+            $key = $row['trans_date'].'|'.number_format((float)$row['abs_amount'],2,'.','').'|'.$row['description'];
+            $existCount[$key] = (int)$row['cnt'];
+        }
 
-        if ($alreadyInDb >= $fileCount[$key]) { $dupes++; continue; }
+        $ins = $db->prepare('INSERT INTO transactions (family_id,created_by,category_id,type,amount,description,note,trans_date,source_file) VALUES (?,?,?,?,?,?,?,?,?)');
+        $fileCount = [];
 
-        $catId = auto_categorize($desc, $type, $budgetCats);
-        $ins->execute([$fid, $u['id'], $catId, $type, $abs, $desc, null, $date, basename($f['name'])]);
-        $existCount[$key] = $alreadyInDb + 1;
-        $imported++;
+        for ($i = 1; $i < count($lines); $i++) {
+            $cols = array_map(fn($c) => trim($c, " \t\"\xC2\xA0"), explode($sep, $lines[$i]));
+            $date   = parse_sv_date($cols[$colDate] ?? '');
+            $desc   = clean_bank_desc($cols[$colDesc] ?? '');
+            $amount = parse_sv_amount($cols[$colAmount] ?? '');
+            if (!$date || !$desc || $amount === null || $amount == 0) { $skipped++; continue; }
+
+            $type = $amount < 0 ? 'expense' : 'income';
+            if ($colType !== null && isset($cols[$colType])) {
+                $rt = mb_strtolower($cols[$colType]);
+                if (preg_match('/ins[\xc3\xa4a]ttning|l[\xc3\xb6o]n|[\xc3\xb6o]verf[\xc3\xb6o]ring.*fr[\xc3\xa5a]n|kredit|bidrag|[\xc3\xa5a]terbetal/i', $rt)) $type = 'income';
+                elseif (preg_match('/k[\xc3\xb6o]p|uttag|betalning|reserverat|debet/i', $rt)) $type = 'expense';
+            }
+
+            $abs = abs($amount);
+            $key = $date.'|'.number_format($abs,2,'.','').'|'.$desc;
+            $fileCount[$key] = ($fileCount[$key] ?? 0) + 1;
+            $alreadyInDb = $existCount[$key] ?? 0;
+
+            if ($alreadyInDb >= $fileCount[$key]) { $dupes++; continue; }
+
+            $catId = auto_categorize($desc, $type, $budgetCats);
+            $ins->execute([$fid, $u['id'], $catId, $type, $abs, $desc, null, $date, basename($f['name'])]);
+            $existCount[$key] = $alreadyInDb + 1;
+            $imported++;
+        }
     }
 
-    jout(['imported' => $imported, 'skipped' => $skipped, 'duplicates' => $dupes]);
+    jout(['imported' => $imported, 'skipped' => $skipped, 'duplicates' => $dupes, 'import_id' => $importId]);
+}
+
+function eco_imports_list(): never {
+    $u = require_auth();
+    $s = get_db()->prepare('SELECT * FROM imports WHERE family_id=? ORDER BY created_at DESC LIMIT 50');
+    $s->execute([$u['active_family_id']]); jout($s->fetchAll());
+}
+
+function eco_import_delete(int $id): never {
+    $u = require_auth(); $fid = $u['active_family_id']; $db = get_db();
+    // Verify ownership
+    $imp = $db->prepare('SELECT id FROM imports WHERE id=? AND family_id=?');
+    $imp->execute([$id, $fid]); if (!$imp->fetch()) json_die(['error' => 'Import hittades inte'], 404);
+    // Delete transactions belonging to this import
+    $dt = $db->prepare('DELETE FROM transactions WHERE import_id=? AND family_id=?');
+    $dt->execute([$id, $fid]); $txDeleted = $dt->rowCount();
+    // Delete import record
+    $db->prepare('DELETE FROM imports WHERE id=? AND family_id=?')->execute([$id, $fid]);
+    jout(['ok' => true, 'transactions_deleted' => $txDeleted]);
+}
+
+function eco_cat_rules_list(): never {
+    $u = require_auth();
+    $s = get_db()->prepare('SELECT cr.*,bc.name AS cat_name,bc.icon AS cat_icon,bc.color AS cat_color
+        FROM cat_rules cr LEFT JOIN budget_categories bc ON bc.id=cr.category_id
+        WHERE cr.family_id=? ORDER BY cr.keyword');
+    $s->execute([$u['active_family_id']]); jout($s->fetchAll());
+}
+
+function eco_cat_rules_create(): never {
+    $u = require_auth(); $keyword = sf('keyword'); if (!$keyword) json_die(['error' => 'Nyckelord krävs']);
+    $catId = intf('category_id'); if (!$catId) json_die(['error' => 'Kategori krävs']);
+    $db = get_db(); $fid = $u['active_family_id'];
+    $db->prepare('INSERT INTO cat_rules (family_id,keyword,category_id) VALUES (?,?,?) ON DUPLICATE KEY UPDATE category_id=VALUES(category_id)')
+        ->execute([$fid, mb_strtolower(trim($keyword)), $catId]);
+    $id = $db->lastInsertId() ?: null;
+    // fetch back (upsert may not give lastInsertId on update)
+    $s = $db->prepare('SELECT cr.*,bc.name AS cat_name,bc.icon AS cat_icon,bc.color AS cat_color
+        FROM cat_rules cr LEFT JOIN budget_categories bc ON bc.id=cr.category_id
+        WHERE cr.family_id=? AND cr.keyword=?');
+    $s->execute([$fid, mb_strtolower(trim($keyword))]); jout($s->fetch(), 201);
+}
+
+function eco_cat_rules_delete(int $id): never {
+    $u = require_auth();
+    get_db()->prepare('DELETE FROM cat_rules WHERE id=? AND family_id=?')->execute([$id, $u['active_family_id']]);
+    jout(['ok' => true]);
 }
 
 // ── Import helpers ─────────────────────────────────────────────────
@@ -202,6 +375,19 @@ function clean_bank_desc(string $raw): string {
     }
     return trim($raw);
 }
+function auto_categorize_with_rules(string $desc, string $type, array $budgetCats, array $dbRules): ?int {
+    $d = mb_strtolower($desc);
+    // DB rules take priority (longest matching keyword wins)
+    $best = null; $bestLen = 0;
+    foreach ($dbRules as $kw => $catId) {
+        if (strlen($kw) > $bestLen && str_contains($d, $kw)) {
+            $best = $catId; $bestLen = strlen($kw);
+        }
+    }
+    if ($best !== null) return $best;
+    return auto_categorize($desc, $type, $budgetCats);
+}
+
 function auto_categorize(string $desc, string $type, array $budgetCats): ?int {
     $d = mb_strtolower($desc);
     $rules = [

@@ -83,6 +83,22 @@ function fam_delete(): never {
     jout(['ok' => true]);
 }
 
+function fam_kick(): never {
+    $u = require_auth(); $target_id = intf('user_id');
+    if (!$target_id) json_die(['error' => 'user_id krävs'], 400);
+    $fid = (int)$u['active_family_id'];
+    $db = get_db();
+    // Only owner can kick
+    $s = $db->prepare('SELECT owner_id FROM families WHERE id=?'); $s->execute([$fid]); $f = $s->fetch();
+    if (!$f) json_die(['error' => 'Familjen hittades inte'], 404);
+    if ((int)$f['owner_id'] !== (int)$u['id']) json_die(['error' => 'Endast ägaren kan sparka ut medlemmar'], 403);
+    if ((int)$target_id === (int)$u['id']) json_die(['error' => 'Du kan inte sparka ut dig själv'], 400);
+    $db->prepare('DELETE FROM user_families WHERE user_id=? AND family_id=?')->execute([$target_id, $fid]);
+    // Reset active_family_id for kicked user if it was this family
+    $db->prepare('UPDATE users SET active_family_id=NULL WHERE id=? AND active_family_id=?')->execute([$target_id, $fid]);
+    jout(['ok' => true]);
+}
+
 function fam_invite_email(): never {
     $u = require_auth(); $email = strtolower(sf('email'));
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) json_die(['error' => 'Ogiltig e-post']);
